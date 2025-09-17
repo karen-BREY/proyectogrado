@@ -7,8 +7,11 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.proyecto_grado.Registar.kt.Registrar
 import androidx.compose.material3.Text
-import com.proyecto_grado.Recuperarcontraseña.kt.RecuperarContrasena
-import com.proyecto_grado.login.kt.LoginScreen as Login
+import com.proyecto_grado.RecuperarContrasena
+import com.proyecto_grado.login.kt.LoginScreen
+import com.proyecto_grado.RecuperarContrasena
+import com.proyecto_grado.Menu.kt.MenuScreen
+import com.proyecto_grado.RegistroAnimal.RegistrarAnimalScreen
 
 
 @Composable
@@ -19,14 +22,18 @@ fun Navegacion(modifier: Modifier = Modifier) {
 
         composable("login") {
             LoginScreen(
-                onLoginSuccess = { navController.navigate("main") },
+                onLoginSuccess = {
+                    navController.navigate("main") {
+                        popUpTo("login") { inclusive = true } // evita volver al login con back
+                    }
+                },
                 onNavigateToRegister = { navController.navigate("Registrar") },
-                onForgotPassword = { navController.navigate("recuperarcontrasena") } // ✔ Ya no es "luego lo hacemos"
+                onForgotPassword = { navController.navigate("recuperarcontrasena") },
+                onNavigateToRecuperarcontrasena = { navController.navigate("recuperarcontrasena") }
             )
         }
 
-
-        composable("Registrar"){
+        composable("Registrar") {
             Registrar(
                 onBackToLogin = { navController.navigate("login") }
             )
@@ -36,44 +43,27 @@ fun Navegacion(modifier: Modifier = Modifier) {
             RecuperarContrasena()
         }
 
-
         composable("main") {
-            MainScreen()
+            MenuScreen(
+                onRegistrarAnimal = { navController.navigate("registrarAnimal") },
+                onRegistrarLote = { navController.navigate("registrarLote") },
+                onRegistrarAlimento = { navController.navigate("registrarAlimento") },
+                onAlimentacion = { navController.navigate("alimentacion") },
+                onPotrero = { navController.navigate("potrero") },
+                onReportes = { navController.navigate("reportes") }
+            )
         }
+
+        // Aquí puedes ir agregando las pantallas nuevas
+        composable("registrarAnimal") {
+            RegistrarAnimalScreen(
+                onBack = { navController.popBackStack() }) }
+        composable("registrarLote") { /* Pantalla Registrar Lote */ }
+        composable("registrarAlimento") { /* Pantalla Registrar Alimento */ }
+        composable("alimentacion") { /* Pantalla Alimentación */ }
+        composable("potrero") { /* Pantalla Potrero */ }
+        composable("reportes") { /* Pantalla Reportes */ }
     }
 }
 
-@Composable
-fun RecuperarContrasenaScreen(onNavigateToValidarCodigo: () -> Unit) {
-    TODO("Not yet implemented")
-}
-
-@Composable
-fun Recuperarcontrasena(onEnviarCodigo: () -> Unit) {
-    TODO("Not yet implemented")
-}
-
-@Composable
-fun Registrar(onBackToLogin: () -> Unit) {
-        TODO("Not yet implemented")
-}
-
-@Composable
-fun MainScreen() {
-    Text("Bienvenido a NutriBovino")
-}
-
-@Composable
-fun LoginScreen(
-    onLoginSuccess: () -> Unit,
-    onNavigateToRegister: () -> Unit,
-    onForgotPassword: () -> Unit
-) {
-    Login(
-        onLoginSuccess = onLoginSuccess,
-        onNavigateToRegister = onNavigateToRegister,
-        onForgotPassword = onForgotPassword,
-        onNavigateToRecuperarcontrasena = {} // Puedes poner lógica después si la necesitas
-    )
-}
 

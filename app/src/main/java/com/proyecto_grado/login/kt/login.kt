@@ -13,15 +13,10 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.google.firebase.auth.FirebaseAuth
-import androidx.compose.material.icons.filled.Visibility
-import androidx.compose.material.icons.filled.VisibilityOff
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.ui.tooling.preview.Preview
-import com.proyecto_grado.RecuperarContrasena
 
 @Composable
 fun LoginScreen(
@@ -34,7 +29,7 @@ fun LoginScreen(
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var isLoading by remember { mutableStateOf(false) }
-    var isPasswordVisible by remember { mutableStateOf(false) }  // Control para mostrar/ocultar la contraseña
+    var isPasswordVisible by remember { mutableStateOf(false) }
 
     val auth = FirebaseAuth.getInstance()
 
@@ -87,7 +82,7 @@ fun LoginScreen(
                         isLoading = false
                         if (task.isSuccessful) {
                             Toast.makeText(context, "Inicio exitoso", Toast.LENGTH_SHORT).show()
-                            onLoginSuccess() // ✅ Navegar al home si es exitoso
+                            onLoginSuccess()
                         } else {
                             Toast.makeText(context, "Error: ${task.exception?.message}", Toast.LENGTH_LONG).show()
                         }
@@ -116,3 +111,15 @@ fun LoginScreen(
         }
     }
 }
+
+@Preview(showBackground = true)
+@Composable
+fun LoginScreenPreview() {
+    LoginScreen(
+        onLoginSuccess = {},
+        onNavigateToRegister = {},
+        onForgotPassword = {},
+        onNavigateToRecuperarcontrasena = {}
+    )
+}
+
