@@ -57,14 +57,24 @@ dependencies {
     implementation(libs.androidx.material3)
     implementation("androidx.navigation:navigation-compose:2.8.9")
     implementation("androidx.compose.material:material-icons-extended") // The version will be taken from the BOM
+    implementation ("com.github.librepdf:openpdf:1.3.39")
+
+    implementation("com.google.code.gson:gson:2.10.1")
 
     implementation(platform("com.google.firebase:firebase-bom:33.12.0"))
     implementation("com.google.firebase:firebase-analytics")
     implementation("com.google.firebase:firebase-auth")
+    implementation("com.google.firebase:firebase-database")
+    implementation ("androidx.navigation:navigation-compose:<versión>")
+    implementation ("androidx.compose.ui:ui:1.x.x")
+    implementation ("androidx.compose.material3:material3:1.x.x")
+    implementation ("androidx.compose.ui:ui-tooling-preview:1.x.x")
+    implementation ("androidx.compose.runtime:runtime:1.x.x")
 
     implementation("androidx.room:room-ktx:2.6.1")
     implementation("androidx.room:room-runtime:2.6.1")
     kapt("androidx.room:room-compiler:2.6.1")
+
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)

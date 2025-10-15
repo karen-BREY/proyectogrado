@@ -11,6 +11,17 @@ import androidx.compose.ui.text.input.*
 import androidx.compose.ui.unit.dp
 import com.google.firebase.auth.FirebaseAuth
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.graphics.Color
+
+
+
+
+
+
+
 
 @Composable
 fun Registrar(
@@ -70,6 +81,7 @@ fun Registrar(
 
         Spacer(modifier = Modifier.height(16.dp))
 
+
         Button(
             onClick = {
                 if (nombre.isBlank() || apellido.isBlank() || telefono.isBlank() ||
@@ -110,7 +122,10 @@ fun Registrar(
                             ).show()
                         }
                     }
-            }
+            },
+            colors = ButtonDefaults.buttonColors(
+                containerColor = Color(0xFF1E8622)
+            )
         ) {
             Text("Registrar")
         }
@@ -120,4 +135,9 @@ fun Registrar(
             CircularProgressIndicator()
         }
     }
+}
+@Preview(showBackground = true)
+@Composable
+fun RegistrarPreview() {
+    Registrar(onBackToLogin = {})
 }

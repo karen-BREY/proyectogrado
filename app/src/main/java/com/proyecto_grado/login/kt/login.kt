@@ -88,7 +88,12 @@ fun LoginScreen(
                         }
                     }
             },
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth(),
+            colors = ButtonDefaults.buttonColors(
+                containerColor = Color(316933), // verde principal
+                contentColor = Color.White // texto blanco
+            )
+
         ) {
             Text("Ingresar")
         }

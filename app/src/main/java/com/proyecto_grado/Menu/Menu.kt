@@ -15,6 +15,7 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.foundation.clickable
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.tooling.preview.Preview
+import com.proyecto_grado.Navegacion.kt.Navegacion
 
 
 class MainActivity : ComponentActivity() {
@@ -22,7 +23,7 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         setContent {
             MaterialTheme {
-                MenuScreen()
+                Navegacion() // ✅ aquí va el NavHost
             }
         }
     }
@@ -35,7 +36,8 @@ fun MenuScreen(
     onRegistrarAlimento: () -> Unit = {},
     onAlimentacion: () -> Unit = {},
     onPotrero: () -> Unit = {},
-    onReportes: () -> Unit = {}
+    onReportes: () -> Unit = {},
+    onPerfilUsuario: () -> Unit = {}
 ) {
     Column(
         modifier = Modifier
@@ -45,12 +47,15 @@ fun MenuScreen(
         // Encabezado con icono de usuario y texto Bienvenido
         Row(
             verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier
+                .fillMaxWidth()
         ) {
             Icon(
                 imageVector = Icons.Default.AccountCircle,
                 contentDescription = "Usuario",
-                modifier = Modifier.size(52.dp)
+                modifier = Modifier
+                    .size(52.dp)
+                    .clickable { onPerfilUsuario() } //  al hacer clic abre perfil
             )
             Spacer(modifier = Modifier.width(20.dp))
             Text(
@@ -61,15 +66,16 @@ fun MenuScreen(
 
         Spacer(modifier = Modifier.height(24.dp))
 
-        // Opciones de menú con navegación
+        // Opciones del menú
         MenuItem(Icons.Default.Pets, "Registrar Animal", onClick = onRegistrarAnimal)
-        MenuItem(Icons.Default.Home, "Registrar Lote", onRegistrarLote)
-        MenuItem(Icons.Default.FoodBank, "Registrar Alimento", onRegistrarAlimento)
-        MenuItem(Icons.Default.EditNote, "Alimentación", onAlimentacion)
-        MenuItem(Icons.Default.Grass, "Potrero", onPotrero)
-        MenuItem(Icons.Default.BarChart, "Reportes", onReportes)
+        MenuItem(Icons.Default.Home, "Registrar Lote", onClick = onRegistrarLote)
+        MenuItem(Icons.Default.FoodBank, "Registrar Alimento", onClick = onRegistrarAlimento)
+        MenuItem(Icons.Default.EditNote, "Alimentación", onClick = onAlimentacion)
+        MenuItem(Icons.Default.Grass, "Potrero", onClick = onPotrero)
+        MenuItem(Icons.Default.BarChart, "Reportes", onClick = onReportes)
     }
 }
+
 
 @Composable
 fun MenuItem(
@@ -81,7 +87,7 @@ fun MenuItem(
         verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier
             .fillMaxWidth()
-            .clickable { onClick() } // ✅ ahora es clickeable
+            .clickable { onClick() }
             .padding(vertical = 24.dp)
     ) {
         Icon(

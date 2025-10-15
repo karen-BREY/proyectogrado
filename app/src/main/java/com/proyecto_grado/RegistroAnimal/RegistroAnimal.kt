@@ -7,10 +7,19 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.material3.ExposedDropdownMenuBox
+import androidx.compose.material3.ExposedDropdownMenuDefaults
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.ui.graphics.Color
 
 
+
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun RegistrarAnimalScreen(onBack: () -> Unit) {
+fun RegistrarAnimalScreen(
+    onBack: () -> Unit,
+    lotes: List<String> = emptyList() // 🔹 Lista de lotes disponibles
+) {
     var nombre by remember { mutableStateOf("") }
     var numero by remember { mutableStateOf("") }
     var lote by remember { mutableStateOf("") }
@@ -19,6 +28,8 @@ fun RegistrarAnimalScreen(onBack: () -> Unit) {
     var raza by remember { mutableStateOf("") }
     var pesoActual by remember { mutableStateOf("") }
     var observaciones by remember { mutableStateOf("") }
+
+    var expanded by remember { mutableStateOf(false) } // 🔹 Control del menú desplegable
 
     Column(
         modifier = Modifier
@@ -33,7 +44,40 @@ fun RegistrarAnimalScreen(onBack: () -> Unit) {
 
         OutlinedTextField(value = nombre, onValueChange = { nombre = it }, label = { Text("Nombre") }, modifier = Modifier.fillMaxWidth())
         OutlinedTextField(value = numero, onValueChange = { numero = it }, label = { Text("Número") }, modifier = Modifier.fillMaxWidth())
-        OutlinedTextField(value = lote, onValueChange = { lote = it }, label = { Text("Lote") }, modifier = Modifier.fillMaxWidth())
+
+        // 🔹 Selector de Lote
+        ExposedDropdownMenuBox(
+            expanded = expanded,
+            onExpandedChange = { expanded = !expanded }
+        ) {
+            OutlinedTextField(
+                value = lote,
+                onValueChange = { },
+                readOnly = true,
+                label = { Text("Lote") },
+                trailingIcon = {
+                    ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded)
+                },
+                modifier = Modifier
+                    .menuAnchor()
+                    .fillMaxWidth()
+            )
+            ExposedDropdownMenu(
+                expanded = expanded,
+                onDismissRequest = { expanded = false }
+            ) {
+                lotes.forEach { loteItem ->
+                    DropdownMenuItem(
+                        text = { Text(loteItem) },
+                        onClick = {
+                            lote = loteItem
+                            expanded = false
+                        }
+                    )
+                }
+            }
+        }
+
         OutlinedTextField(value = fecha, onValueChange = { fecha = it }, label = { Text("Fecha nacimiento") }, modifier = Modifier.fillMaxWidth())
         OutlinedTextField(value = edad, onValueChange = { edad = it }, label = { Text("Edad") }, modifier = Modifier.fillMaxWidth())
         OutlinedTextField(value = raza, onValueChange = { raza = it }, label = { Text("Raza") }, modifier = Modifier.fillMaxWidth())
@@ -45,9 +89,13 @@ fun RegistrarAnimalScreen(onBack: () -> Unit) {
         Button(
             onClick = {
                 // Aquí luego conectamos con Firebase o BD
-                println("Animal registrado: $nombre, $raza")
+                println("Animal registrado: $nombre, $raza en lote: $lote")
             },
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth(),
+            colors = ButtonDefaults.buttonColors(
+                containerColor = Color(0xFF1E8622), // verde principal
+                contentColor = Color.White // texto blanco
+            )
         ) {
             Text("Guardar")
         }
@@ -64,6 +112,9 @@ fun RegistrarAnimalScreen(onBack: () -> Unit) {
 @Composable
 fun RegistrarAnimalScreenPreview() {
     MaterialTheme {
-        RegistrarAnimalScreen(onBack = {})
+        RegistrarAnimalScreen(
+            onBack = {},
+            lotes = listOf("Lote 1", "Lote 2", "Lote 3") // 🔹 Ejemplo
+        )
     }
 }
