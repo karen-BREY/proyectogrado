@@ -11,34 +11,31 @@ import com.proyecto_grado.login.kt.LoginScreen
 import com.proyecto_grado.Menu.kt.MenuScreen
 import com.proyecto_grado.RegistarAlimento.RegistrarAlimentoScreen
 import com.proyecto_grado.RegistroAnimal.RegistrarAnimalScreen
-import com.proyecto_grado.RegistroLote.kt.RegistrarLoteScreen
-import com.proyecto_grado.RegistarAlimento.ListaAlimentoScreen
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.remember
-import com.proyecto_grado.Alimentacion.AlimentacionScreen
 import com.proyecto_grado.Potrero.PotreroScreen
-import com.proyecto_grado.Reporte.ReporteScreen
-import androidx.navigation.NavType
-import androidx.navigation.navArgument
-import com.google.firebase.auth.FirebaseAuth
-import com.proyecto_grado.DetalleReporte.DetalleReporteScreen
-import com.proyecto_grado.DetalleReporte.ReporteAnimal
-import com.google.gson.Gson
+import com.proyecto_grado.Alimentacion.AlimentacionScreen
+import com.proyecto_grado.AlimentacionRepository
 import com.proyecto_grado.Perfil.PerfilUsuarioScreen
-
-
+import com.proyecto_grado.Reporte.GenerarReporteScreen
+import com.proyecto_grado.Reporte.ReporteGeneralScreen
+import androidx.compose.ui.platform.LocalContext
+import com.proyecto_grado.ListaAlimentoScreen
+import com.proyecto_grado.RegistroLote.RegistrarLoteScreen
+import com.proyecto_grado.ReporteGeneral
 
 
 @Composable
 fun Navegacion(modifier: Modifier = Modifier) {
     val navController = rememberNavController()
     val listaAlimentos = remember { mutableStateListOf("Pasto kikuyo", "Melaza") }
+    val context = LocalContext.current
 
-
+    val repo = remember(context ){ AlimentacionRepository (context)}
 
     NavHost(navController = navController, startDestination = "login") {
 
-        // 🔹 LOGIN
+        //  LOGIN
         composable("login") {
             LoginScreen(
                 onLoginSuccess = {
@@ -54,15 +51,15 @@ fun Navegacion(modifier: Modifier = Modifier) {
 
 
 
-        // 🔹 REGISTRAR USUARIO
+        //  REGISTRAR USUARIO
         composable("Registrar") {
             Registrar(onBackToLogin = { navController.navigate("login") })
         }
 
-        // 🔹 RECUPERAR CONTRASEÑA
+        //  RECUPERAR CONTRASEÑA
         composable("recuperarcontrasena") { RecuperarContrasena() }
 
-        // 🔹 MENÚ PRINCIPAL
+        //  MENÚ PRINCIPAL
         composable("main") {
             MenuScreen(
                 onRegistrarAnimal = { navController.navigate("registrarAnimal") },
@@ -70,88 +67,106 @@ fun Navegacion(modifier: Modifier = Modifier) {
                 onRegistrarAlimento = { navController.navigate("registrarAlimento") },
                 onAlimentacion = { navController.navigate("alimentacion") },
                 onPotrero = { navController.navigate("potrero") },
-                onReportes = { navController.navigate("reportes") },
-                onPerfilUsuario = { navController.navigate("perfilUsuario") } // ✅ aquí
+                onReporteGeneral = { navController.navigate("reporteGeneral") },
+                onPerfilUsuario = { navController.navigate("perfil") }
             )
         }
 
-        // 🔹 REGISTRAR ANIMAL
+        //  REGISTRAR ANIMAL
         composable("registrarAnimal") {
             RegistrarAnimalScreen(onBack = { navController.popBackStack() })
         }
 
-        // 🔹 REGISTRAR LOTE
+
+
+        //  REGISTRAR LOTE
         composable("registrarLote") {
             RegistrarLoteScreen(
-                onBack = { navController.popBackStack() },
-                onLoteGuardado = { numero, observacion ->
-                    println("Lote guardado: $numero - $observacion")
-                }
+                onBack = { navController.popBackStack() }
             )
         }
-
-
-        // 🔹 REGISTRAR ALIMENTO
-        composable("registrarAlimento") {
-            RegistrarAlimentoScreen(
+        composable("listaAlimentos") { // O como hayas llamado a esta ruta
+            ListaAlimentoScreen(
+                onNavigateToRegistro = { navController.navigate("registrarAlimento") }, // Navega a la pantalla de registro
                 onBack = { navController.popBackStack() }
             )
         }
 
-        // 🔹 ALIMENTACIÓN
-        composable("alimentacion") {
-            AlimentacionScreen(
-                onBack = { navController.popBackStack() },
-                animales = emptyList(),
-                alimentos = emptyList(),
-                lotes = emptyList(),
+
+
+        //  REGISTRAR ALIMENTO
+        composable("registrarAlimento") {
+            RegistrarAlimentoScreen(onBack = { navController.popBackStack() }
             )
+        }
+
+        //  ALIMENTACIÓN
+        composable("alimentacion") {
+            AlimentacionScreen(onBack = { navController.popBackStack() })
         }
 
 
 
-
-        // 🔹 POTRERO
+        //  POTRERO
         composable("potrero") {
             PotreroScreen(onBack = { navController.popBackStack() })
         }
 
-        // 🔹 REPORTES
-        composable("reportes") {
-            ReporteScreen(
-                navController = navController,
+        //  REPORTES
+        composable("reporteGeneral") {
+            // Ya no creas el repo aquí, lo reutilizas.
+            ReporteGeneralScreen(
+                onBack = { navController.popBackStack() },
+                repo = repo // <-- Reutiliza el repo
+            )
+        }
+
+
+        // GENERAR REPORTE
+        composable("generarReporte") {
+            GenerarReporteScreen(
+                onBack = { navController.popBackStack() },
+                repo = repo
+            )
+        }
+
+//  DETALLE DE REPORTE
+        composable("detalleReporte") {
+            val reporte = navController.previousBackStackEntry
+                ?.savedStateHandle
+                ?.get<com.proyecto_grado.ReporteGeneral>("reporte")
+
+            DetalleReporteScreen(
+                reporte = reporte,
                 onBack = { navController.popBackStack() }
             )
         }
 
-        // 🔹 DETALLE DE REPORTE
-        composable(
-            "detalleReporte/{reporteJson}",
-            arguments = listOf(navArgument("reporteJson") { type = NavType.StringType })
-        ) { backStackEntry ->
-            val gson = Gson()
-            val reporteJson = backStackEntry.arguments?.getString("reporteJson")
-            val reporte = gson.fromJson(reporteJson, ReporteAnimal::class.java)
 
-            DetalleReporteScreen(
-                onBack = { navController.popBackStack() },
-                reporte = reporte
-            )
-        }
 
         // 🔹 PERFIL DE USUARIO
-        composable("perfilUsuario") {
+        composable("perfil") {
             PerfilUsuarioScreen(
                 onBack = { navController.popBackStack() },
                 onLogout = {
-                    FirebaseAuth.getInstance().signOut()
                     navController.navigate("login") {
-                        popUpTo("main") { inclusive = true } // ✅ corregido
+                        popUpTo(0) // Limpia toda la pila de navegación
                     }
                 }
             )
         }
     }
+}
+
+@Composable
+fun DetalleReporteScreen(reporte: ReporteGeneral?, onBack: () -> Boolean) {
+    TODO("Not yet implemented")
+}
+
+
+@Composable
+fun AnimalListScreen(onAddAnimalClick: () -> Unit) {
+    TODO("Not yet implemented")
 }
 
 @Composable

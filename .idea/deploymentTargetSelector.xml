@@ -13,7 +13,16 @@
         </DropdownSelection>
         <DialogSelection />
       </SelectionState>
-      <SelectionState runConfigName="LoginScreenPreview">
+      <SelectionState runConfigName="flujoCompleto_loginYnavegacionARegistroAnimal()">
+        <option name="selectionMode" value="DROPDOWN" />
+      </SelectionState>
+      <SelectionState runConfigName="NavigationFlowTest">
+        <option name="selectionMode" value="DROPDOWN" />
+      </SelectionState>
+      <SelectionState runConfigName="login_fallaConContrasenaIncorrecta_yMuestraError()">
+        <option name="selectionMode" value="DROPDOWN" />
+      </SelectionState>
+      <SelectionState runConfigName="flujoCompleto_registroYRedireccion()">
         <option name="selectionMode" value="DROPDOWN" />
       </SelectionState>
     </selectionStates>

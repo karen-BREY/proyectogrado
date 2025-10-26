@@ -3,6 +3,7 @@ package com.proyecto_grado.Menu.kt
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.material.icons.Icons
@@ -13,9 +14,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.foundation.clickable
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.tooling.preview.Preview
 import com.proyecto_grado.Navegacion.kt.Navegacion
+
+
+
 
 
 class MainActivity : ComponentActivity() {
@@ -23,7 +28,7 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         setContent {
             MaterialTheme {
-                Navegacion() // ✅ aquí va el NavHost
+                Navegacion() //
             }
         }
     }
@@ -36,43 +41,52 @@ fun MenuScreen(
     onRegistrarAlimento: () -> Unit = {},
     onAlimentacion: () -> Unit = {},
     onPotrero: () -> Unit = {},
-    onReportes: () -> Unit = {},
+    onReporteGeneral: () -> Unit = {},
     onPerfilUsuario: () -> Unit = {}
 ) {
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(40.dp)
+            .padding(0.dp)
     ) {
         // Encabezado con icono de usuario y texto Bienvenido
         Row(
             verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier
+                // 1. Ocupa todo el ancho de la pantalla
                 .fillMaxWidth()
+                // 2. Añade el color de fondo verde.
+                .background(Color(0xFF80B47A)) // Puedes cambiar este color
+                // 3. Añade padding DENTRO de la franja para separar el contenido de los bordes.
+                .padding(horizontal = 16.dp, vertical = 20.dp)
         ) {
             Icon(
                 imageVector = Icons.Default.AccountCircle,
                 contentDescription = "Usuario",
                 modifier = Modifier
                     .size(52.dp)
-                    .clickable { onPerfilUsuario() } //  al hacer clic abre perfil
+                    .clickable { onPerfilUsuario() },
+                // 4. Cambia el color del icono a blanco para que contraste con el fondo verde.
+                tint = Color.White
             )
             Spacer(modifier = Modifier.width(20.dp))
             Text(
                 text = "Bienvenido",
-                style = MaterialTheme.typography.headlineSmall
+                style = MaterialTheme.typography.headlineSmall,
+                // 5. Cambia también el color del texto a blanco.
+                color = Color.White
             )
         }
 
         Spacer(modifier = Modifier.height(24.dp))
 
         // Opciones del menú
-        MenuItem(Icons.Default.Pets, "Registrar Animal", onClick = onRegistrarAnimal)
-        MenuItem(Icons.Default.Home, "Registrar Lote", onClick = onRegistrarLote)
-        MenuItem(Icons.Default.FoodBank, "Registrar Alimento", onClick = onRegistrarAlimento)
-        MenuItem(Icons.Default.EditNote, "Alimentación", onClick = onAlimentacion)
+        MenuItem(Icons.Default.LocalOffer, "Registrar Animal", onClick = onRegistrarAnimal)
+        MenuItem(Icons.Default.DownloadDone, "Registrar Lote", onClick = onRegistrarLote)
+        MenuItem(Icons.Default.EditNote, "Registrar Alimento", onClick = onRegistrarAlimento)
+        MenuItem(Icons.Default.FormatColorText, "Alimentación", onClick = onAlimentacion)
         MenuItem(Icons.Default.Grass, "Potrero", onClick = onPotrero)
-        MenuItem(Icons.Default.BarChart, "Reportes", onClick = onReportes)
+        MenuItem(Icons.Default.BarChart, "Reportes", onClick = onReporteGeneral)
     }
 }
 
@@ -89,11 +103,13 @@ fun MenuItem(
             .fillMaxWidth()
             .clickable { onClick() }
             .padding(vertical = 24.dp)
+            .padding(horizontal = 16.dp)
     ) {
         Icon(
             imageVector = icon,
             contentDescription = text,
             modifier = Modifier.size(30.dp)
+
         )
         Spacer(modifier = Modifier.width(18.dp))
         Text(

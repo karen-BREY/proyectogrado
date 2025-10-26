@@ -19,8 +19,9 @@ import java.util.Calendar
 import java.text.SimpleDateFormat
 import java.util.Locale
 import androidx.compose.ui.graphics.Color
-import androidx.compose.material3.TextFieldDefaults
-
+import androidx.compose.foundation.background
+import androidx.compose.material.icons.filled.CalendarToday
+import androidx.compose.ui.text.font.FontWeight
 
 
 
@@ -36,6 +37,8 @@ data class Potrero(
     val observacion: String
 )
 
+
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PotreroScreen(onBack: () -> Unit) {
@@ -50,7 +53,7 @@ fun PotreroScreen(onBack: () -> Unit) {
     val listaPotreros = remember { mutableStateListOf<Potrero>() }
     val context = LocalContext.current
 
-    // 📅 Función para mostrar el selector de fecha
+    //  Función para mostrar el selector de fecha
     fun mostrarDatePicker(onDateSelected: (String) -> Unit) {
         val calendario = Calendar.getInstance()
         val anio = calendario.get(Calendar.YEAR)
@@ -69,14 +72,14 @@ fun PotreroScreen(onBack: () -> Unit) {
         ).show()
     }
 
-    // 📆 Función para calcular días de diferencia entre dos fechas
+    // 📆 Calcular días entre dos fechas
     fun calcularDias(fechaInicio: String, fechaFin: String): Int {
         return try {
             val formato = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
             val inicio = formato.parse(fechaInicio)
             val fin = formato.parse(fechaFin)
             val diferencia = fin.time - inicio.time
-            (diferencia / (1000 * 60 * 60 * 24)).toInt() // convertir milisegundos a días
+            (diferencia / (1000 * 60 * 60 * 24)).toInt()
         } catch (e: Exception) {
             0
         }
@@ -85,21 +88,41 @@ fun PotreroScreen(onBack: () -> Unit) {
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Registro de Potrero") },
+                title = {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.padding(top = 6.dp)
+                    ) {
+                        Text(
+                            text = "Registro de Potrero",
+                            color = Color.White,
+                            style = MaterialTheme.typography.titleLarge
+                        )
+                    }
+                },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Atrás")
+                        Icon(
+                            imageVector = Icons.Default.ArrowBack,
+                            contentDescription = "Atrás",
+                            tint = Color.White
+                        )
                     }
-                }
+                },
+                colors = TopAppBarDefaults.mediumTopAppBarColors(
+                    containerColor = Color(0xFF80B47A) // Verde principal
+                )
             )
         }
     ) { padding ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
+                .background(Color.White)
+                .padding(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 16.dp)
                 .padding(padding)
-                .padding(16.dp)
         ) {
+            // Número de potrero
             OutlinedTextField(
                 value = numero,
                 onValueChange = { numero = it },
@@ -109,6 +132,7 @@ fun PotreroScreen(onBack: () -> Unit) {
 
             Spacer(modifier = Modifier.height(8.dp))
 
+            // Tipo de pasto
             OutlinedTextField(
                 value = tipoPasto,
                 onValueChange = { tipoPasto = it },
@@ -118,6 +142,7 @@ fun PotreroScreen(onBack: () -> Unit) {
 
             Spacer(modifier = Modifier.height(8.dp))
 
+            // Lote
             OutlinedTextField(
                 value = lote,
                 onValueChange = { lote = it },
@@ -127,52 +152,61 @@ fun PotreroScreen(onBack: () -> Unit) {
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            // 📅 Fecha de ingreso
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clickable { mostrarDatePicker { fechaIngreso = it } }
-            ) {
-                OutlinedTextField(
-                    value = fechaIngreso,
-                    onValueChange = {},
-                    label = { Text("Fecha de ingreso") },
-                    modifier = Modifier.fillMaxWidth(),
-                    readOnly = true,
-                    enabled = false
-                )
-            }
+            //  Fecha de ingreso con ícono de calendario
+            OutlinedTextField(
+                value = fechaIngreso,
+                onValueChange = {},
+                label = { Text("Fecha de ingreso") },
+                readOnly = true,
+                trailingIcon = {
+                    Icon(
+                        imageVector = Icons.Default.CalendarToday,
+                        contentDescription = "Abrir calendario",
+                        tint = Color(0xFF524E58), // Gris oscuro
+                        modifier = Modifier.clickable {
+                            mostrarDatePicker { fechaIngreso = it }
+                        }
+                    )
+                },
+                modifier = Modifier.fillMaxWidth()
+            )
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            // 📅 Fecha de salida
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clickable { mostrarDatePicker { fechaSalida = it } }
-            ) {
-                OutlinedTextField(
-                    value = fechaSalida,
-                    onValueChange = {},
-                    label = { Text("Fecha de salida") },
-                    modifier = Modifier.fillMaxWidth(),
-                    readOnly = true,
-                    enabled = false
-                )
-            }
+            // 📅 Fecha de salida con ícono de calendario
+            OutlinedTextField(
+                value = fechaSalida,
+                onValueChange = {},
+                label = { Text("Fecha de salida") },
+                readOnly = true,
+                trailingIcon = {
+                    Icon(
+                        imageVector = Icons.Default.CalendarToday,
+                        contentDescription = "Abrir calendario",
+                        tint = Color(0xFF524E58),
+                        modifier = Modifier.clickable {
+                            mostrarDatePicker { fechaSalida = it }
+                        }
+                    )
+                },
+                modifier = Modifier.fillMaxWidth()
+            )
 
             Spacer(modifier = Modifier.height(8.dp))
 
+            // Checkbox agua
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Checkbox(
                     checked = agua,
-                    onCheckedChange = { agua = it }
+                    onCheckedChange = { agua = it },
+                    colors = CheckboxDefaults.colors(checkedColor = Color(0xFF1E8622))
                 )
                 Text("¿Tiene agua disponible?")
             }
 
             Spacer(modifier = Modifier.height(8.dp))
 
+            // Observaciones
             OutlinedTextField(
                 value = observacion,
                 onValueChange = { observacion = it },
@@ -182,6 +216,7 @@ fun PotreroScreen(onBack: () -> Unit) {
 
             Spacer(modifier = Modifier.height(16.dp))
 
+            // Botón Registrar
             Button(
                 onClick = {
                     if (numero.isNotBlank() && fechaIngreso.isNotBlank() && fechaSalida.isNotBlank()) {
@@ -212,11 +247,10 @@ fun PotreroScreen(onBack: () -> Unit) {
                 },
                 modifier = Modifier.fillMaxWidth(),
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = Color(0xFF80B47A), // verde principal
-                    contentColor = Color.White // texto blanco
+                    containerColor = Color(0xFF1E8622),
+                    contentColor = Color.White
                 )
-            )
-             {
+            ) {
                 Text("Registrar Potrero")
             }
 
@@ -240,7 +274,9 @@ fun PotreroScreen(onBack: () -> Unit) {
                             Text("Salida: ${potrero.fechaSalida}")
                             Text("Días permanencia: ${potrero.diasPermanencia}")
                             Text("Agua: ${if (potrero.agua) "Sí" else "No"}")
-                            Text("Observación: ${potrero.observacion}")
+                            if (potrero.observacion.isNotBlank()) {
+                                Text("Observación: ${potrero.observacion}")
+                            }
                         }
                     }
                 }
@@ -249,12 +285,10 @@ fun PotreroScreen(onBack: () -> Unit) {
     }
 }
 
-
-
-
-@Preview(showBackground = true)
+@Preview(showBackground = true, showSystemUi = true)
 @Composable
 fun PotreroScreenPreview() {
     PotreroScreen(onBack = {})
 }
+
 

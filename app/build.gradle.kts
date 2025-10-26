@@ -47,6 +47,7 @@ android {
     }
 }
 dependencies {
+    // --- AndroidX y Compose ---
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
@@ -56,15 +57,21 @@ dependencies {
     implementation(libs.androidx.ui.tooling.preview)
     implementation(libs.androidx.material3)
     implementation("androidx.navigation:navigation-compose:2.8.9")
-    implementation("androidx.compose.material:material-icons-extended") // The version will be taken from the BOM
+    implementation("androidx.compose.material:material-icons-extended")
+    //PDF
     implementation ("com.github.librepdf:openpdf:1.3.39")
 
-    implementation("com.google.code.gson:gson:2.10.1")
-
+    // --- Firebase ---
     implementation(platform("com.google.firebase:firebase-bom:33.12.0"))
-    implementation("com.google.firebase:firebase-analytics")
-    implementation("com.google.firebase:firebase-auth")
-    implementation("com.google.firebase:firebase-database")
+
+    // Firebase Services
+    implementation("com.google.firebase:firebase-auth-ktx")
+    implementation("com.google.firebase:firebase-database-ktx")
+    implementation("com.google.firebase:firebase-analytics-ktx")
+
+    // Gson
+    implementation("com.google.code.gson:gson:2.10.1")
+    // Navegación Compose
     implementation ("androidx.navigation:navigation-compose:<versión>")
     implementation ("androidx.compose.ui:ui:1.x.x")
     implementation ("androidx.compose.material3:material3:1.x.x")
@@ -75,7 +82,7 @@ dependencies {
     implementation("androidx.room:room-runtime:2.6.1")
     kapt("androidx.room:room-compiler:2.6.1")
 
-
+    // testing
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)

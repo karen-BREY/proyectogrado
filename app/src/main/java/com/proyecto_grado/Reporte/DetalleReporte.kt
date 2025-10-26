@@ -1,48 +1,70 @@
-package com.proyecto_grado.DetalleReporte
+// Asegúrate de que el package sea el correcto para tu proyecto
+package com.proyecto_grado
 
 import android.content.Context
 import android.content.Intent
+import android.net.Uri
+import android.widget.Toast
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.graphics.Color
-
-
-// Modelo de datos del reporte
-data class ReporteAnimal(
-    val nombre: String,
-    val raza: String,
-    val fechaNacimiento: String,
-    val pesoActual: String,
-    val variacionPeso: String,
-    val tipoPasto: String,
-    val suplemento: String,
-    val observaciones: String
-)
+import androidx.core.content.FileProvider
+import java.io.File
+import java.io.FileWriter
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DetalleReporteScreen(
-    onBack: () -> Unit,
-    reporte: ReporteAnimal
+    reporte: ReporteGeneral?, // ✅ Recibe el objeto directamente
+    onBack: () -> Unit
 ) {
     val context = LocalContext.current
 
+    // ✅ Si el reporte es nulo, mostramos un mensaje y detenemos la ejecución.
+    if (reporte == null) {
+        Scaffold(
+            topBar = {
+                TopAppBar(
+                    title = { Text("Error", color = Color.White) },
+                    navigationIcon = {
+                        IconButton(onClick = onBack) {
+                            Icon(Icons.Default.ArrowBack, contentDescription = "Atrás", tint = Color.White)
+                        }
+                    },
+                    colors = TopAppBarDefaults.mediumTopAppBarColors(containerColor = Color(0xFFB00020)) // Color rojo para errores
+                )
+            }
+        ) { padding ->
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(padding),
+                contentAlignment = Alignment.Center
+            ) {
+                Text("No se pudo cargar el detalle del reporte.")
+            }
+        }
+        return
+    }
+
+    // --- Si el reporte es válido, se muestra la pantalla normal ---
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Detalle del Reporte") },
+                title = { Text("Detalle del Reporte", color = Color.White) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Atrás")
+                        Icon(Icons.Default.ArrowBack, contentDescription = "Atrás", tint = Color.White)
                     }
-                }
+                },
+                colors = TopAppBarDefaults.mediumTopAppBarColors(containerColor = Color(0xFF80B47A))
             )
         }
     ) { padding ->
@@ -52,80 +74,75 @@ fun DetalleReporteScreen(
                 .padding(padding)
                 .padding(16.dp)
         ) {
-            Text("Detalle del Animal", style = MaterialTheme.typography.titleLarge)
+            // Usamos 'reporte' directamente, que ya sabemos que no es nulo aquí.
+            Text("Nombre: ${reporte.nombreAnimal}", style = MaterialTheme.typography.bodyLarge)
             Spacer(modifier = Modifier.height(8.dp))
-            Text("Nombre: ${reporte.nombre}")
-            Text("Raza: ${reporte.raza}")
-            Text("Fecha de Nacimiento: ${reporte.fechaNacimiento}")
-            Text("Peso actual: ${reporte.pesoActual} kg")
-            Text("Variación de peso: ${reporte.variacionPeso} kg")
-            Text("Tipo de pasto: ${reporte.tipoPasto}")
-            Text("Suplemento: ${reporte.suplemento}")
-            Text("Observaciones: ${reporte.observaciones}")
+            Text("Raza: ${reporte.raza}", style = MaterialTheme.typography.bodyLarge)
+            Spacer(modifier = Modifier.height(8.dp))
+            Text("Fecha de nacimiento: ${reporte.fechaNacimiento}", style = MaterialTheme.typography.bodyLarge)
+            Spacer(modifier = Modifier.height(8.dp))
+            Text("Peso actual: ${reporte.pesoActual} kg", style = MaterialTheme.typography.bodyLarge)
+            Spacer(modifier = Modifier.height(8.dp))
+            Text("Alimento: ${reporte.alimento}", style = MaterialTheme.typography.bodyLarge)
+            Spacer(modifier = Modifier.height(8.dp))
+            if (reporte.observacion.isNotBlank()) {
+                Text("Observación: ${reporte.observacion}", style = MaterialTheme.typography.bodyLarge)
+            }
 
             Spacer(modifier = Modifier.height(24.dp))
 
             Button(
-                onClick = { generarYCompartirPDF(context, reporte) },
+                onClick = { generarYEnviarCSV(context, reporte) },
                 modifier = Modifier.fillMaxWidth(),
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = Color(0xFF1E8622), // verde principal
-                    contentColor = Color.White // texto blanco
+                    containerColor = Color(0xFF1E8622),
+                    contentColor = Color.White
                 )
             ) {
-                Text(" Exportar y Enviar por WhatsApp")
+                Text("Exportar y Enviar CSV")
             }
         }
     }
 }
 
-private fun generarYCompartirPDF(
-    context: Context,
-    animal: ReporteAnimal
-) {
-    // Aquí implementaremos la generación y envío del PDF
-    val mensaje = """
-        Reporte del Animal:
-        Nombre: ${animal.nombre}
-        Raza: ${animal.raza}
-        Peso actual: ${animal.pesoActual} kg
-        Variación de peso: ${animal.variacionPeso} kg
-        Tipo de pasto: ${animal.tipoPasto}
-        Suplemento: ${animal.suplemento}
-        Observaciones: ${animal.observaciones}
-    """.trimIndent()
-
-    val intent = Intent(Intent.ACTION_SEND).apply {
-        type = "text/plain"
-        putExtra(Intent.EXTRA_TEXT, mensaje)
-        setPackage("com.whatsapp")
-    }
-
+private fun generarYEnviarCSV(context: Context, reporte: ReporteGeneral) {
     try {
+        // 1️⃣ Crear el archivo temporal CSV
+        val file = File(context.cacheDir, "reporte_${reporte.nombreAnimal}.csv")
+        val writer = FileWriter(file)
+
+        // 2️⃣ Escribir encabezados y valores
+        writer.appendLine("Campo,Valor")
+        writer.appendLine("Nombre,${reporte.nombreAnimal}")
+        writer.appendLine("Raza,${reporte.raza}")
+        writer.appendLine("Fecha de Nacimiento,${reporte.fechaNacimiento}")
+        writer.appendLine("Peso Actual,${reporte.pesoActual}")
+        writer.appendLine("Alimento,${reporte.alimento}")
+        writer.appendLine("Observación,${reporte.observacion}")
+        writer.flush()
+        writer.close()
+
+        // 3️⃣ Obtener URI segura con FileProvider
+        val uri: Uri = FileProvider.getUriForFile(
+            context,
+            "${context.packageName}.provider",
+            file
+        )
+
+        // 4️⃣ Crear Intent para compartir por WhatsApp
+        val intent = Intent(Intent.ACTION_SEND).apply {
+            type = "text/csv"
+            putExtra(Intent.EXTRA_STREAM, uri)
+            putExtra(Intent.EXTRA_TEXT, "📋 Reporte del animal: ${reporte.nombreAnimal}")
+            setPackage("com.whatsapp")
+            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+        }
+
         context.startActivity(intent)
+
     } catch (e: Exception) {
-        // Si no está instalado WhatsApp
+        // En caso de que WhatsApp no esté instalado o haya otro error
+        Toast.makeText(context, "Error al exportar: ${e.message}", Toast.LENGTH_LONG).show()
         e.printStackTrace()
     }
-}
-
-
-@Preview(showBackground = true, showSystemUi = true)
-@Composable
-fun DetalleReportePreview() {
-    val reporteEjemplo = ReporteAnimal(
-        nombre = "Toro Bravo",
-        raza = "Brahman",
-        fechaNacimiento = "12/05/2022",
-        pesoActual = "450",
-        variacionPeso = "+20",
-        tipoPasto = "Estrella Africana",
-        suplemento = "Concentrado Premium",
-        observaciones = "Buen aumento de peso"
-    )
-
-    DetalleReporteScreen(
-        onBack = {},
-        reporte = reporteEjemplo
-    )
 }

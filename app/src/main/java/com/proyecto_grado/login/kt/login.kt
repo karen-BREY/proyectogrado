@@ -1,22 +1,30 @@
 package com.proyecto_grado.login.kt
 
 import android.widget.Toast
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.google.firebase.auth.FirebaseAuth
+import com.proyecto_grado.R
+import androidx.compose.ui.platform.testTag
+
 
 @Composable
 fun LoginScreen(
@@ -36,20 +44,40 @@ fun LoginScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
+            .background(Color.White)
             .padding(24.dp),
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Text("Iniciar sesión", fontSize = 24.sp)
+        // --- INICIO: LOGO AÑADIDO ---
+        Image(
+            painter = painterResource(id = R.mipmap.logo_nutribovino_foreground),
+            contentDescription = "Logo de la aplicación",
+            modifier = Modifier
+                .fillMaxWidth(0.9f) // El logo ocupará el 50% del ancho de la pantalla
+                .padding(bottom = 20.dp)
+        )
+
+        Text("Iniciar sesión", fontSize = 24.sp, color = Color.Black)
 
         Spacer(modifier = Modifier.height(16.dp))
 
         OutlinedTextField(
             value = email,
             onValueChange = { email = it },
-            label = { Text("Correo") },
+            label = { Text("Correo", color = Color.Black) },
             singleLine = true,
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier
+                .fillMaxWidth()
+                .testTag("email_field"),
+            colors = OutlinedTextFieldDefaults.colors(
+                unfocusedContainerColor = Color(0xFF80B47A),
+                focusedContainerColor = Color(0xFF80B47A),
+                unfocusedTextColor = Color.Black,
+                focusedTextColor = Color.Black,
+                unfocusedBorderColor = Color.Transparent,
+                focusedBorderColor = Color(0xFF1E8622)
+            )
         )
 
         Spacer(modifier = Modifier.height(8.dp))
@@ -57,19 +85,29 @@ fun LoginScreen(
         OutlinedTextField(
             value = password,
             onValueChange = { password = it },
-            label = { Text("Contraseña") },
+            label = { Text("Contraseña", color = Color.Black) },
             singleLine = true,
             visualTransformation = if (isPasswordVisible) VisualTransformation.None else PasswordVisualTransformation(),
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier
+                .fillMaxWidth()
+                .testTag("password_field"), // <-- AÑADIDO
             trailingIcon = {
                 IconButton(onClick = { isPasswordVisible = !isPasswordVisible }) {
                     Icon(
                         imageVector = if (isPasswordVisible) Icons.Filled.Visibility else Icons.Filled.VisibilityOff,
                         contentDescription = "Mostrar/Ocultar Contraseña",
-                        tint = Color.Gray
+                        tint = Color.Black
                     )
                 }
-            }
+            },
+            colors = OutlinedTextFieldDefaults.colors(
+                unfocusedContainerColor = Color(0xFF80B47A),
+                focusedContainerColor = Color(0xFF80B47A),
+                unfocusedTextColor = Color.Black,
+                focusedTextColor = Color.Black,
+                unfocusedBorderColor = Color.Transparent,
+                focusedBorderColor = Color(0xFF1E8622)
+            )
         )
 
         Spacer(modifier = Modifier.height(16.dp))
@@ -88,10 +126,12 @@ fun LoginScreen(
                         }
                     }
             },
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier
+                .fillMaxWidth()
+                .testTag("login_button"),
             colors = ButtonDefaults.buttonColors(
-                containerColor = Color(316933), // verde principal
-                contentColor = Color.White // texto blanco
+                containerColor = Color(0xFF1E8622),
+                contentColor = Color.White
             )
 
         ) {
@@ -105,18 +145,23 @@ fun LoginScreen(
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        TextButton(onClick = { onForgotPassword() }) {
+        TextButton(
+            onClick = { onForgotPassword() },
+            colors = ButtonDefaults.textButtonColors(contentColor = Color.Black)
+        ) {
             Text("¿Olvidaste tu contraseña?")
         }
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        TextButton(onClick = { onNavigateToRegister() }) {
+        TextButton(
+            onClick = { onNavigateToRegister() },
+            colors = ButtonDefaults.textButtonColors(contentColor = Color.Black)
+        ) {
             Text("¿No tienes cuenta? Regístrate")
         }
     }
 }
-
 @Preview(showBackground = true)
 @Composable
 fun LoginScreenPreview() {
@@ -127,4 +172,7 @@ fun LoginScreenPreview() {
         onNavigateToRecuperarcontrasena = {}
     )
 }
+
+
+
 

@@ -15,6 +15,8 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.graphics.Color
+import android.content.ContentValues
+import com.proyecto_grado.DatabaseHelper
 
 
 
@@ -30,6 +32,7 @@ fun Registrar(
 ) {
     val context = LocalContext.current
     val auth = FirebaseAuth.getInstance()
+    val dbHelper = remember { DatabaseHelper(context) } // 🔹 Instancia de la base local
 
     var nombre by remember { mutableStateOf("") }
     var apellido by remember { mutableStateOf("") }
@@ -81,7 +84,6 @@ fun Registrar(
 
         Spacer(modifier = Modifier.height(16.dp))
 
-
         Button(
             onClick = {
                 if (nombre.isBlank() || apellido.isBlank() || telefono.isBlank() ||
@@ -112,8 +114,25 @@ fun Registrar(
                     .addOnCompleteListener { task ->
                         isLoading = false
                         if (task.isSuccessful) {
-                            Toast.makeText(context, "Usuario creado exitosamente", Toast.LENGTH_LONG).show()
-                            onBackToLogin()
+                            // 🔹 Insertar datos en la base SQLite local
+                            try {
+                                val db = dbHelper.writableDatabase
+                                val values = ContentValues().apply {
+                                    put("nombre", nombre)
+                                    put("apellido", apellido)
+                                    put("correo", correo)
+                                    put("telefono", telefono)
+                                    put("contrasena", contrasena)
+                                }
+                                db.insert("Usuario", null, values)
+                                db.close()
+
+                                Toast.makeText(context, "Usuario creado exitosamente", Toast.LENGTH_LONG).show()
+                                onBackToLogin()
+                            } catch (e: Exception) {
+                                Toast.makeText(context, "Error al guardar en base local: ${e.message}", Toast.LENGTH_LONG).show()
+                            }
+
                         } else {
                             Toast.makeText(
                                 context,
@@ -136,6 +155,7 @@ fun Registrar(
         }
     }
 }
+
 @Preview(showBackground = true)
 @Composable
 fun RegistrarPreview() {
