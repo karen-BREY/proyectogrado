@@ -37,7 +37,7 @@ data class Alimentacion(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-// ✅ CORREGIDO: Eliminamos el parámetro 'repo' que no se usaba
+
 fun AlimentacionScreen(onBack: () -> Unit) {
     val context = LocalContext.current
     val repo = remember { AlimentacionRepository(context) }
@@ -45,7 +45,7 @@ fun AlimentacionScreen(onBack: () -> Unit) {
 
     val usuarioCorreo = Firebase.auth.currentUser?.email
 
-    // 🔹 Listas y Mapas para los menús desplegables
+
     val animales = remember { mutableStateListOf<String>() }
     val lotes = remember { mutableStateListOf<String>() }
     val alimentos = remember { mutableStateListOf<String>() }
@@ -53,10 +53,10 @@ fun AlimentacionScreen(onBack: () -> Unit) {
     val lotesMap = remember { mutableStateMapOf<String, Int>() }
     val alimentosMap = remember { mutableStateMapOf<String, Int>() }
 
-    // 🔹 Lista de registros de alimentación
+
     val listaAlimentacion = remember { mutableStateListOf<Alimentacion>() }
 
-    // 🔹 Cargar datos iniciales solo si el usuario está logueado
+
     LaunchedEffect(usuarioCorreo) {
         if (usuarioCorreo != null) {
             // Animales
@@ -90,7 +90,7 @@ fun AlimentacionScreen(onBack: () -> Unit) {
         }
     }
 
-    // 🔹 Variables del formulario (sin cambios)
+
     var animalSeleccionado by remember { mutableStateOf("") }
     var expandedAnimal by remember { mutableStateOf(false) }
     var loteSeleccionado by remember { mutableStateOf("") }
@@ -118,7 +118,7 @@ fun AlimentacionScreen(onBack: () -> Unit) {
             )
         }
     ) { padding ->
-        // ✅ Usamos LazyColumn para toda la pantalla para evitar que el teclado oculte los campos
+
         LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
@@ -127,7 +127,7 @@ fun AlimentacionScreen(onBack: () -> Unit) {
         ) {
             // === FORMULARIO ===
             item {
-                // === 🐄 SELECCIONAR ANIMAL ===
+                // ===  SELECCIONAR ANIMAL ===
                 ExposedDropdownMenuBox(
                     expanded = expandedAnimal,
                     onExpandedChange = { expandedAnimal = !expandedAnimal }
@@ -256,7 +256,7 @@ fun AlimentacionScreen(onBack: () -> Unit) {
                         val alimentoId = alimentosMap[alimentoSeleccionado]
                         val cantidadDouble = cantidad.toDoubleOrNull()
 
-                        // ✅ Verificamos también que el correo no sea nulo
+
                         if (usuarioCorreo != null && animalId != null && alimentoId != null && cantidadDouble != null && cantidadDouble > 0 && frecuencia.isNotBlank()) {
                             val nueva = Alimentacion(
                                 numeroAnimal = animalId,
@@ -266,7 +266,7 @@ fun AlimentacionScreen(onBack: () -> Unit) {
                                 frecuencia = frecuencia,
                                 observacion = observacion
                             )
-                            // ✅ Pasamos el correo al insertar
+
                             repo.insertarAlimentacion(nueva, usuarioCorreo)
                             listaAlimentacion.add(0, nueva) // Añade al principio de la lista para verlo al instante
 
@@ -300,7 +300,7 @@ fun AlimentacionScreen(onBack: () -> Unit) {
                     Card(Modifier.fillMaxWidth().padding(vertical = 4.dp), elevation = CardDefaults.cardElevation(2.dp)) {
                         Row(Modifier.fillMaxWidth().padding(8.dp), horizontalArrangement = Arrangement.SpaceBetween) {
                             Column(Modifier.weight(1f)) {
-                                // ✅ CORREGIDO: Usamos los mapas para mostrar nombres, es más eficiente
+
                                 val nombreAnimal = animalesMap.entries.find { it.value == registro.numeroAnimal }?.key ?: "ID: ${registro.numeroAnimal}"
                                 val nombreLote = lotesMap.entries.find { it.value == registro.lote }?.key ?: "Sin lote"
                                 val nombreAlimento = alimentosMap.entries.find { it.value == registro.alimento }?.key ?: "ID: ${registro.alimento}"
@@ -317,7 +317,7 @@ fun AlimentacionScreen(onBack: () -> Unit) {
 
                             IconButton(onClick = {
                                 if (usuarioCorreo != null) {
-                                    // ✅ Pasamos el correo al eliminar
+
                                     repo.eliminarAlimentacion(registro.idAlimentacion, usuarioCorreo)
                                     listaAlimentacion.remove(registro)
                                 }
@@ -333,11 +333,10 @@ fun AlimentacionScreen(onBack: () -> Unit) {
 }
 
 
-// ✅ Esta pantalla no es necesaria si el historial ya está en AlimentacionScreen,
-// pero la corrijo por si la usas en otro sitio.
+
 @Composable
 fun ListaAlimentacionScreen(repository: AlimentacionRepository, usuarioCorreo: String?) {
-    // ✅ La lista se carga en un LaunchedEffect y depende del correo
+
     var lista by remember { mutableStateOf<List<Alimentacion>>(emptyList()) }
 
     LaunchedEffect(usuarioCorreo) {
@@ -351,7 +350,6 @@ fun ListaAlimentacionScreen(repository: AlimentacionRepository, usuarioCorreo: S
             Card(Modifier.fillMaxWidth().padding(vertical = 4.dp), elevation = CardDefaults.cardElevation(4.dp)) {
                 Row(Modifier.fillMaxWidth().padding(8.dp), horizontalArrangement = Arrangement.SpaceBetween) {
                     Column {
-                        // ... (Sería mejor mostrar nombres que IDs aquí también)
                         Text("Animal ID: ${alimentacion.numeroAnimal}")
                         Text("Alimento ID: ${alimentacion.alimento}")
                         Text("Cantidad: ${alimentacion.cantidad}")

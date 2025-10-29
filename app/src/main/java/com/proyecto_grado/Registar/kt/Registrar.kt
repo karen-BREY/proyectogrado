@@ -16,6 +16,11 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.graphics.Color
 import android.content.ContentValues
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Visibility
+import androidx.compose.material.icons.filled.VisibilityOff
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 import com.proyecto_grado.DatabaseHelper
 
 
@@ -32,7 +37,7 @@ fun Registrar(
 ) {
     val context = LocalContext.current
     val auth = FirebaseAuth.getInstance()
-    val dbHelper = remember { DatabaseHelper(context) } // 🔹 Instancia de la base local
+    val dbHelper = remember { DatabaseHelper(context) }
 
     var nombre by remember { mutableStateOf("") }
     var apellido by remember { mutableStateOf("") }
@@ -41,6 +46,8 @@ fun Registrar(
     var contrasena by remember { mutableStateOf("") }
     var confirmarContrasena by remember { mutableStateOf("") }
     var isLoading by remember { mutableStateOf(false) }
+    var contrasenaVisible by remember { mutableStateOf(false) }
+    var confirmarContrasenaVisible by remember { mutableStateOf(false) }
 
     Column(
         modifier = modifier
@@ -57,7 +64,11 @@ fun Registrar(
         OutlinedTextField(value = apellido, onValueChange = { apellido = it }, label = { Text("Apellido") })
         OutlinedTextField(
             value = telefono,
-            onValueChange = { if (it.all { char -> char.isDigit() }) telefono = it },
+            onValueChange = {
+                if (it.length <= 10 && it.all { char -> char.isDigit() }) {
+                    telefono = it
+                }
+            },
             label = { Text("Teléfono") },
             keyboardOptions = KeyboardOptions.Default.copy(keyboardType = KeyboardType.Number)
         )
@@ -67,20 +78,49 @@ fun Registrar(
             label = { Text("Correo") },
             keyboardOptions = KeyboardOptions.Default.copy(keyboardType = KeyboardType.Email)
         )
+
         OutlinedTextField(
             value = contrasena,
             onValueChange = { contrasena = it },
             label = { Text("Contraseña") },
-            visualTransformation = PasswordVisualTransformation(),
-            keyboardOptions = KeyboardOptions.Default.copy(keyboardType = KeyboardType.Password)
+            singleLine = true,
+            visualTransformation = if (contrasenaVisible) VisualTransformation.None else PasswordVisualTransformation(),
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+            trailingIcon = {
+                val image = if (contrasenaVisible)
+                    Icons.Filled.Visibility
+                else
+                    Icons.Filled.VisibilityOff
+
+                val description = if (contrasenaVisible) "Ocultar contraseña" else "Mostrar contraseña"
+
+                IconButton(onClick = { contrasenaVisible = !contrasenaVisible }) {
+                    Icon(imageVector = image, description)
+                }
+            }
         )
+
         OutlinedTextField(
             value = confirmarContrasena,
             onValueChange = { confirmarContrasena = it },
             label = { Text("Confirmar contraseña") },
-            visualTransformation = PasswordVisualTransformation(),
-            keyboardOptions = KeyboardOptions.Default.copy(keyboardType = KeyboardType.Password)
+            singleLine = true,
+            visualTransformation = if (confirmarContrasenaVisible) VisualTransformation.None else PasswordVisualTransformation(),
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+            trailingIcon = {
+                val image = if (confirmarContrasenaVisible)
+                    Icons.Filled.Visibility
+                else
+                    Icons.Filled.VisibilityOff
+
+                val description = if (confirmarContrasenaVisible) "Ocultar contraseña" else "Mostrar contraseña"
+
+                IconButton(onClick = { confirmarContrasenaVisible = !confirmarContrasenaVisible }) {
+                    Icon(imageVector = image, description)
+                }
+            }
         )
+
 
         Spacer(modifier = Modifier.height(16.dp))
 

@@ -54,7 +54,7 @@ fun LoginScreen(
             painter = painterResource(id = R.mipmap.logo_nutribovino_foreground),
             contentDescription = "Logo de la aplicación",
             modifier = Modifier
-                .fillMaxWidth(0.9f) // El logo ocupará el 50% del ancho de la pantalla
+                .fillMaxWidth(0.9f)
                 .padding(bottom = 20.dp)
         )
 
@@ -90,7 +90,7 @@ fun LoginScreen(
             visualTransformation = if (isPasswordVisible) VisualTransformation.None else PasswordVisualTransformation(),
             modifier = Modifier
                 .fillMaxWidth()
-                .testTag("password_field"), // <-- AÑADIDO
+                .testTag("password_field"),
             trailingIcon = {
                 IconButton(onClick = { isPasswordVisible = !isPasswordVisible }) {
                     Icon(

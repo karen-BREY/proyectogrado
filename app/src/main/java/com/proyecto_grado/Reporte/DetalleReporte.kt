@@ -22,12 +22,12 @@ import java.io.FileWriter
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DetalleReporteScreen(
-    reporte: ReporteGeneral?, // ✅ Recibe el objeto directamente
+    reporte: ReporteGeneral?,
     onBack: () -> Unit
 ) {
     val context = LocalContext.current
 
-    // ✅ Si el reporte es nulo, mostramos un mensaje y detenemos la ejecución.
+
     if (reporte == null) {
         Scaffold(
             topBar = {
@@ -38,7 +38,7 @@ fun DetalleReporteScreen(
                             Icon(Icons.Default.ArrowBack, contentDescription = "Atrás", tint = Color.White)
                         }
                     },
-                    colors = TopAppBarDefaults.mediumTopAppBarColors(containerColor = Color(0xFFB00020)) // Color rojo para errores
+                    colors = TopAppBarDefaults.mediumTopAppBarColors(containerColor = Color(0xFFB00020))
                 )
             }
         ) { padding ->
@@ -54,7 +54,7 @@ fun DetalleReporteScreen(
         return
     }
 
-    // --- Si el reporte es válido, se muestra la pantalla normal ---
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -74,7 +74,7 @@ fun DetalleReporteScreen(
                 .padding(padding)
                 .padding(16.dp)
         ) {
-            // Usamos 'reporte' directamente, que ya sabemos que no es nulo aquí.
+
             Text("Nombre: ${reporte.nombreAnimal}", style = MaterialTheme.typography.bodyLarge)
             Spacer(modifier = Modifier.height(8.dp))
             Text("Raza: ${reporte.raza}", style = MaterialTheme.typography.bodyLarge)
@@ -107,11 +107,11 @@ fun DetalleReporteScreen(
 
 private fun generarYEnviarCSV(context: Context, reporte: ReporteGeneral) {
     try {
-        // 1️⃣ Crear el archivo temporal CSV
+
         val file = File(context.cacheDir, "reporte_${reporte.nombreAnimal}.csv")
         val writer = FileWriter(file)
 
-        // 2️⃣ Escribir encabezados y valores
+
         writer.appendLine("Campo,Valor")
         writer.appendLine("Nombre,${reporte.nombreAnimal}")
         writer.appendLine("Raza,${reporte.raza}")
@@ -122,18 +122,18 @@ private fun generarYEnviarCSV(context: Context, reporte: ReporteGeneral) {
         writer.flush()
         writer.close()
 
-        // 3️⃣ Obtener URI segura con FileProvider
+
         val uri: Uri = FileProvider.getUriForFile(
             context,
             "${context.packageName}.provider",
             file
         )
 
-        // 4️⃣ Crear Intent para compartir por WhatsApp
+
         val intent = Intent(Intent.ACTION_SEND).apply {
             type = "text/csv"
             putExtra(Intent.EXTRA_STREAM, uri)
-            putExtra(Intent.EXTRA_TEXT, "📋 Reporte del animal: ${reporte.nombreAnimal}")
+            putExtra(Intent.EXTRA_TEXT, " Reporte del animal: ${reporte.nombreAnimal}")
             setPackage("com.whatsapp")
             addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
         }
@@ -141,7 +141,7 @@ private fun generarYEnviarCSV(context: Context, reporte: ReporteGeneral) {
         context.startActivity(intent)
 
     } catch (e: Exception) {
-        // En caso de que WhatsApp no esté instalado o haya otro error
+
         Toast.makeText(context, "Error al exportar: ${e.message}", Toast.LENGTH_LONG).show()
         e.printStackTrace()
     }

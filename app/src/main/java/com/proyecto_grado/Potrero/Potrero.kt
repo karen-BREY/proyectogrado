@@ -9,273 +9,365 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.foundation.clickable
 import android.app.DatePickerDialog
+import android.icu.text.SimpleDateFormat
 import android.widget.DatePicker
+import android.widget.Toast
 import java.util.Calendar
-import java.text.SimpleDateFormat
-import java.util.Locale
 import androidx.compose.ui.graphics.Color
-import androidx.compose.foundation.background
 import androidx.compose.material.icons.filled.CalendarToday
+import androidx.compose.material.icons.filled.Delete
+import com.proyecto_grado.DatabaseHelper
+import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.ui.text.font.FontWeight
+import com.google.firebase.auth.ktx.auth
+import com.google.firebase.ktx.Firebase
+import com.proyecto_grado.LoteRepository
+import java.util.Date
+import java.util.Locale
 
-
-
-// Modelo de datos del potrero
 data class Potrero(
-    val numero: String,
+    val idPotrero: Int,
+    val numero: Int,
     val tipoPasto: String,
-    val lote: String,
-    val fechaIngreso: String,
-    val fechaSalida: String,
-    val diasPermanencia: Int,
-    val agua: Boolean,
-    val observacion: String
+    val lote: Int?,
+    val fechaIngreso: String?,
+    val fechaSalida: String?,
+    val observacion: String?
 )
-
-
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PotreroScreen(onBack: () -> Unit) {
+    val context = LocalContext.current
+    val repo = remember { PotreroRepository(context) }
+    val dbHelper = remember { DatabaseHelper(context) }
+    val usuarioCorreo = Firebase.auth.currentUser?.email
+
+    val lotes = remember { mutableStateListOf<String>() }
+    val lotesMap = remember { mutableStateMapOf<String, Int>() }
+    val listaPotreros = remember { mutableStateListOf<Potrero>() }
+
     var numero by remember { mutableStateOf("") }
     var tipoPasto by remember { mutableStateOf("") }
-    var lote by remember { mutableStateOf("") }
+    var loteSeleccionado by remember { mutableStateOf("") }
+    var expandedLote by remember { mutableStateOf(false) }
     var fechaIngreso by remember { mutableStateOf("") }
     var fechaSalida by remember { mutableStateOf("") }
-    var agua by remember { mutableStateOf(false) }
     var observacion by remember { mutableStateOf("") }
 
-    val listaPotreros = remember { mutableStateListOf<Potrero>() }
-    val context = LocalContext.current
+    var diasPermanencia by remember { mutableStateOf("") }
+    var proximoPotrero by remember { mutableStateOf("") }
 
-    //  Función para mostrar el selector de fecha
+
+    fun calcularDias(ingreso: String, salida: String): Int {
+        return try {
+            val formato = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
+            val fechaI = formato.parse(ingreso)
+            val fechaS = formato.parse(salida)
+            val diff = fechaS.time - fechaI.time
+            (diff / (1000 * 60 * 60 * 24)).toInt()
+        } catch (e: Exception) {
+            -1
+        }
+    }
+
+
+    fun diasRestantesHastaSalida(salida: String?): Int {
+        return try {
+            if (salida.isNullOrEmpty()) return -1
+            val formato = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
+            val fechaS = formato.parse(salida)
+            val hoy = Date()
+            val diff = fechaS.time - hoy.time
+            (diff / (1000 * 60 * 60 * 24)).toInt()
+        } catch (e: Exception) {
+            -1
+        }
+    }
+
     fun mostrarDatePicker(onDateSelected: (String) -> Unit) {
         val calendario = Calendar.getInstance()
-        val anio = calendario.get(Calendar.YEAR)
-        val mes = calendario.get(Calendar.MONTH)
-        val dia = calendario.get(Calendar.DAY_OF_MONTH)
-
         DatePickerDialog(
             context,
-            { _: DatePicker, year: Int, month: Int, dayOfMonth: Int ->
-                val fechaSeleccionada = "%02d/%02d/%d".format(dayOfMonth, month + 1, year)
-                onDateSelected(fechaSeleccionada)
+            { _: DatePicker, year: Int, month: Int, day: Int ->
+                onDateSelected("%02d/%02d/%d".format(day, month + 1, year))
             },
-            anio,
-            mes,
-            dia
+            calendario.get(Calendar.YEAR),
+            calendario.get(Calendar.MONTH),
+            calendario.get(Calendar.DAY_OF_MONTH)
         ).show()
     }
 
-    // 📆 Calcular días entre dos fechas
-    fun calcularDias(fechaInicio: String, fechaFin: String): Int {
-        return try {
-            val formato = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
-            val inicio = formato.parse(fechaInicio)
-            val fin = formato.parse(fechaFin)
-            val diferencia = fin.time - inicio.time
-            (diferencia / (1000 * 60 * 60 * 24)).toInt()
-        } catch (e: Exception) {
-            0
+    LaunchedEffect(usuarioCorreo) {
+        if (usuarioCorreo != null) {
+            listaPotreros.clear()
+            listaPotreros.addAll(repo.obtenerPotreros(usuarioCorreo))
+
+            val loteRepo = LoteRepository(context)
+            lotes.clear()
+            lotesMap.clear()
+            loteRepo.obtenerLotes(usuarioCorreo).forEach { lote ->
+                val nombre = "Lote ${lote.numero}"
+                lotes.add(nombre)
+                lotesMap[nombre] = lote.idLote
+            }
+
+            // 🔹 Calcular sugerencia del próximo potrero
+            val ultimoNumero = listaPotreros.maxOfOrNull { it.numero } ?: 0
+            proximoPotrero = (ultimoNumero + 1).toString()
         }
     }
 
     Scaffold(
         topBar = {
             TopAppBar(
-                title = {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier.padding(top = 6.dp)
-                    ) {
-                        Text(
-                            text = "Registro de Potrero",
-                            color = Color.White,
-                            style = MaterialTheme.typography.titleLarge
-                        )
-                    }
-                },
+                title = { Text("Registro de Potrero") },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = Color(0xFF80B47A),
+                    titleContentColor = Color.White,
+                    navigationIconContentColor = Color.White
+                ),
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(
-                            imageVector = Icons.Default.ArrowBack,
-                            contentDescription = "Atrás",
-                            tint = Color.White
-                        )
+                        Icon(Icons.Default.ArrowBack, contentDescription = "Atrás")
                     }
-                },
-                colors = TopAppBarDefaults.mediumTopAppBarColors(
-                    containerColor = Color(0xFF80B47A) // Verde principal
-                )
+                }
             )
         }
     ) { padding ->
-        Column(
+        LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
-                .background(Color.White)
-                .padding(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 16.dp)
                 .padding(padding)
+                .padding(16.dp)
         ) {
-            // Número de potrero
-            OutlinedTextField(
-                value = numero,
-                onValueChange = { numero = it },
-                label = { Text("Número de potrero") },
-                modifier = Modifier.fillMaxWidth()
-            )
 
-            Spacer(modifier = Modifier.height(8.dp))
-
-            // Tipo de pasto
-            OutlinedTextField(
-                value = tipoPasto,
-                onValueChange = { tipoPasto = it },
-                label = { Text("Tipo de pasto") },
-                modifier = Modifier.fillMaxWidth()
-            )
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            // Lote
-            OutlinedTextField(
-                value = lote,
-                onValueChange = { lote = it },
-                label = { Text("Lote") },
-                modifier = Modifier.fillMaxWidth()
-            )
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            //  Fecha de ingreso con ícono de calendario
-            OutlinedTextField(
-                value = fechaIngreso,
-                onValueChange = {},
-                label = { Text("Fecha de ingreso") },
-                readOnly = true,
-                trailingIcon = {
-                    Icon(
-                        imageVector = Icons.Default.CalendarToday,
-                        contentDescription = "Abrir calendario",
-                        tint = Color(0xFF524E58), // Gris oscuro
-                        modifier = Modifier.clickable {
-                            mostrarDatePicker { fechaIngreso = it }
-                        }
-                    )
-                },
-                modifier = Modifier.fillMaxWidth()
-            )
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            // 📅 Fecha de salida con ícono de calendario
-            OutlinedTextField(
-                value = fechaSalida,
-                onValueChange = {},
-                label = { Text("Fecha de salida") },
-                readOnly = true,
-                trailingIcon = {
-                    Icon(
-                        imageVector = Icons.Default.CalendarToday,
-                        contentDescription = "Abrir calendario",
-                        tint = Color(0xFF524E58),
-                        modifier = Modifier.clickable {
-                            mostrarDatePicker { fechaSalida = it }
-                        }
-                    )
-                },
-                modifier = Modifier.fillMaxWidth()
-            )
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            // Checkbox agua
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Checkbox(
-                    checked = agua,
-                    onCheckedChange = { agua = it },
-                    colors = CheckboxDefaults.colors(checkedColor = Color(0xFF1E8622))
+            // === FORMULARIO ===
+            item {
+                OutlinedTextField(
+                    value = numero,
+                    onValueChange = { numero = it },
+                    label = { Text("Número de potrero") },
+                    modifier = Modifier.fillMaxWidth()
                 )
-                Text("¿Tiene agua disponible?")
-            }
 
-            Spacer(modifier = Modifier.height(8.dp))
+                if (proximoPotrero.isNotBlank()) {
+                    Text(
+                        text = "💡 Sugerencia: próximo potrero N° $proximoPotrero",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = Color.Gray,
+                        modifier = Modifier.padding(top = 4.dp, bottom = 8.dp)
+                    )
+                }
 
-            // Observaciones
-            OutlinedTextField(
-                value = observacion,
-                onValueChange = { observacion = it },
-                label = { Text("Observaciones") },
-                modifier = Modifier.fillMaxWidth()
-            )
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            // Botón Registrar
-            Button(
-                onClick = {
-                    if (numero.isNotBlank() && fechaIngreso.isNotBlank() && fechaSalida.isNotBlank()) {
-                        val diasPermanencia = calcularDias(fechaIngreso, fechaSalida)
-
-                        listaPotreros.add(
-                            Potrero(
-                                numero,
-                                tipoPasto,
-                                lote,
-                                fechaIngreso,
-                                fechaSalida,
-                                diasPermanencia,
-                                agua,
-                                observacion
-                            )
-                        )
-
-                        // Limpiar campos
-                        numero = ""
-                        tipoPasto = ""
-                        lote = ""
-                        fechaIngreso = ""
-                        fechaSalida = ""
-                        agua = false
-                        observacion = ""
-                    }
-                },
-                modifier = Modifier.fillMaxWidth(),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = Color(0xFF1E8622),
-                    contentColor = Color.White
+                OutlinedTextField(
+                    value = tipoPasto,
+                    onValueChange = { tipoPasto = it },
+                    label = { Text("Tipo de pasto") },
+                    modifier = Modifier.fillMaxWidth()
                 )
-            ) {
-                Text("Registrar Potrero")
-            }
 
-            Spacer(modifier = Modifier.height(16.dp))
+                Spacer(Modifier.height(8.dp))
 
-            Text("Historial de Potreros", style = MaterialTheme.typography.titleMedium)
+                // SELECCIONAR LOTE
+                ExposedDropdownMenuBox(
+                    expanded = expandedLote,
+                    onExpandedChange = { expandedLote = !expandedLote }
+                ) {
+                    OutlinedTextField(
+                        value = loteSeleccionado,
+                        onValueChange = {},
+                        readOnly = true,
+                        label = { Text("Seleccionar Lote") },
+                        modifier = Modifier.menuAnchor().fillMaxWidth()
+                    )
 
-            LazyColumn {
-                items(listaPotreros) { potrero ->
-                    Card(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(8.dp),
-                        elevation = CardDefaults.cardElevation(4.dp)
+                    DropdownMenu(
+                        expanded = expandedLote,
+                        onDismissRequest = { expandedLote = false }
                     ) {
-                        Column(modifier = Modifier.padding(16.dp)) {
-                            Text("Número: ${potrero.numero}")
-                            Text("Pasto: ${potrero.tipoPasto}")
-                            Text("Lote: ${potrero.lote}")
-                            Text("Ingreso: ${potrero.fechaIngreso}")
-                            Text("Salida: ${potrero.fechaSalida}")
-                            Text("Días permanencia: ${potrero.diasPermanencia}")
-                            Text("Agua: ${if (potrero.agua) "Sí" else "No"}")
-                            if (potrero.observacion.isNotBlank()) {
-                                Text("Observación: ${potrero.observacion}")
+                        if (lotes.isEmpty()) {
+                            DropdownMenuItem(
+                                text = { Text("No hay lotes registrados") },
+                                onClick = { expandedLote = false }
+                            )
+                        } else {
+                            lotes.forEach { lote ->
+                                DropdownMenuItem(
+                                    text = { Text(lote) },
+                                    onClick = {
+                                        loteSeleccionado = lote
+                                        expandedLote = false
+                                    }
+                                )
+                            }
+                        }
+                    }
+                }
+
+                Spacer(Modifier.height(8.dp))
+
+                // === FECHAS ===
+                OutlinedTextField(
+                    value = fechaIngreso,
+                    onValueChange = {},
+                    readOnly = true,
+                    label = { Text("Fecha de ingreso") },
+                    trailingIcon = {
+                        Icon(
+                            Icons.Default.CalendarToday,
+                            contentDescription = null,
+                            modifier = Modifier.clickable {
+                                mostrarDatePicker {
+                                    fechaIngreso = it
+                                    if (fechaSalida.isNotBlank()) {
+                                        diasPermanencia = "${calcularDias(it, fechaSalida)} días"
+                                    }
+                                }
+                            }
+                        )
+                    },
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                Spacer(Modifier.height(8.dp))
+
+                OutlinedTextField(
+                    value = fechaSalida,
+                    onValueChange = {},
+                    readOnly = true,
+                    label = { Text("Fecha de salida") },
+                    trailingIcon = {
+                        Icon(
+                            Icons.Default.CalendarToday,
+                            contentDescription = null,
+                            modifier = Modifier.clickable {
+                                mostrarDatePicker {
+                                    fechaSalida = it
+                                    if (fechaIngreso.isNotBlank()) {
+                                        diasPermanencia = "${calcularDias(fechaIngreso, it)} días"
+                                    }
+                                }
+                            }
+                        )
+                    },
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                if (diasPermanencia.isNotBlank()) {
+                    Text(
+                        text = "Días de permanencia: $diasPermanencia",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = Color(0xFF1E8622),
+                        modifier = Modifier.padding(top = 8.dp)
+                    )
+                }
+
+                Spacer(Modifier.height(8.dp))
+
+                OutlinedTextField(
+                    value = observacion,
+                    onValueChange = { observacion = it },
+                    label = { Text("Observación (opcional)") },
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                Spacer(Modifier.height(16.dp))
+
+                Button(
+                    onClick = {
+                        val loteId = lotesMap[loteSeleccionado]
+                        val numeroInt = numero.toIntOrNull()
+
+                        if (usuarioCorreo != null && numeroInt != null && fechaIngreso.isNotBlank() && fechaSalida.isNotBlank()) {
+                            val nuevo = Potrero(
+                                idPotrero = 0,
+                                numero = numeroInt,
+                                tipoPasto = tipoPasto.ifBlank { "Sin especificar" },
+                                lote = loteId,
+                                fechaIngreso = fechaIngreso,
+                                fechaSalida = fechaSalida,
+                                observacion = observacion.ifBlank { "Sin observación" }
+                            )
+                            repo.insertarPotrero(nuevo, usuarioCorreo)
+                            listaPotreros.add(0, nuevo)
+
+                            proximoPotrero = (numeroInt + 1).toString()
+
+                            numero = ""
+                            tipoPasto = ""
+                            loteSeleccionado = ""
+                            fechaIngreso = ""
+                            fechaSalida = ""
+                            observacion = ""
+                            diasPermanencia = ""
+
+                            Toast.makeText(context, "Potrero registrado correctamente", Toast.LENGTH_SHORT).show()
+                        } else {
+                            Toast.makeText(context, "Completa los campos obligatorios", Toast.LENGTH_SHORT).show()
+                        }
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF1E8622))
+                ) {
+                    Text("Registrar Potrero")
+                }
+
+                Spacer(Modifier.height(16.dp))
+
+                Text("Lista de Potreros", style = MaterialTheme.typography.titleMedium)
+            }
+
+            // === LISTA DE POTREROS ===
+            if (listaPotreros.isEmpty()) {
+                item { Text("No hay potreros registrados", modifier = Modifier.padding(8.dp)) }
+            } else {
+                items(listaPotreros) { potrero ->
+                    val diasRestantes = diasRestantesHastaSalida(potrero.fechaSalida)
+                    val mensajeTraslado = when {
+                        diasRestantes > 0 -> "En $diasRestantes días se pasa al potrero ${potrero.numero + 1}"
+                        diasRestantes == 0 -> "Hoy se realiza el traslado"
+                        diasRestantes < 0 -> "Traslado pendiente"
+                        else -> ""
+                    }
+
+                    Card(
+                        Modifier.fillMaxWidth().padding(vertical = 4.dp),
+                        elevation = CardDefaults.cardElevation(2.dp)
+                    ) {
+                        Row(
+                            Modifier.fillMaxWidth().padding(8.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Column(Modifier.weight(1f)) {
+                                val nombreLote = lotesMap.entries.find { it.value == potrero.lote }?.key ?: "Sin lote"
+
+                                Text("Potrero N°: ${potrero.numero}", style = MaterialTheme.typography.bodyLarge)
+                                Text("Tipo de pasto: ${potrero.tipoPasto}")
+                                Text("Lote: $nombreLote")
+                                Text("Ingreso: ${potrero.fechaIngreso}")
+                                Text("Salida: ${potrero.fechaSalida}")
+                                if (!potrero.observacion.isNullOrBlank()) Text("Obs: ${potrero.observacion}")
+                                if (mensajeTraslado.isNotBlank()) {
+                                    Text(
+                                        mensajeTraslado,
+                                        color = Color(0xFF388E3C),
+                                        fontWeight = FontWeight.Medium,
+                                        modifier = Modifier.padding(top = 4.dp)
+                                    )
+                                }
+                            }
+
+                            IconButton(onClick = {
+                                if (usuarioCorreo != null) {
+                                    repo.eliminarPotrero(potrero.idPotrero, usuarioCorreo)
+                                    listaPotreros.remove(potrero)
+                                }
+                            }) {
+                                Icon(Icons.Default.Delete, "Eliminar", tint = MaterialTheme.colorScheme.error)
                             }
                         }
                     }
@@ -285,10 +377,10 @@ fun PotreroScreen(onBack: () -> Unit) {
     }
 }
 
-@Preview(showBackground = true, showSystemUi = true)
-@Composable
-fun PotreroScreenPreview() {
-    PotreroScreen(onBack = {})
-}
+
+
+
+
+
 
 

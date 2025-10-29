@@ -54,19 +54,17 @@ fun RegistrarAlimentoScreen(onBack: () -> Unit) {
     val context = LocalContext.current
     val repo = remember { AlimentoRepository(context) }
 
-    // ✅ Obtenemos el correo del usuario actual.
+
     val usuarioCorreo = Firebase.auth.currentUser?.email
 
     var mostrarFormulario by remember { mutableStateOf(false) }
     val listaAlimentos = remember { mutableStateListOf<Alimento>() }
     var alimentoEditando by remember { mutableStateOf<Alimento?>(null) }
 
-    // --- Función para recargar los datos ---
-    // La usaremos varias veces, así que es mejor tenerla en una función.
+
     fun recargarAlimentos() {
         if (usuarioCorreo != null) {
             listaAlimentos.clear()
-            // ✅ Paréntesis de cierre añadido
             listaAlimentos.addAll(repo.obtenerAlimentos(usuarioCorreo).map {
                 Alimento(it.id, it.nombre, it.cantidad, it.fechaIngreso, it.fechaVencimiento, it.tipo)
             })
@@ -86,7 +84,7 @@ fun RegistrarAlimentoScreen(onBack: () -> Unit) {
     }
 
 
-    // Cargar alimentos cuando la pantalla se abre por primera vez o se cierra el formulario.
+
     LaunchedEffect(mostrarFormulario) {
         if (!mostrarFormulario && usuarioCorreo != null) {
             recargarAlimentos()
@@ -169,7 +167,7 @@ fun RegistrarAlimentoScreen(onBack: () -> Unit) {
                                         IconButton(onClick = {
                                             if (usuarioCorreo != null) {
                                                 repo.eliminarAlimento(alimento.id, usuarioCorreo)
-                                                listaAlimentos.remove(alimento) // Actualización visual inmediata
+                                                listaAlimentos.remove(alimento)
                                             }
                                         }) {
                                             Icon(Icons.Default.Delete, "Eliminar", tint = Color.Red)

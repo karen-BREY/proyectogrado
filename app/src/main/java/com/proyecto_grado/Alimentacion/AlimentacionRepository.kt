@@ -115,25 +115,28 @@ class AlimentacionRepository(private val context: Context?) {
     }
 
 
-    // ✅ CORREGIDO: Ahora pide 'usuarioCorreo' para filtrar.
+
+    // Dentro de tu clase de repositorio (Ej: AlimentacionRepository.kt)
+
     fun obtenerReportePorAnimalId(animalId: Int, usuarioCorreo: String): ReporteGeneral? {
         val db = dbHelper?.readableDatabase ?: return null
         var reporte: ReporteGeneral? = null
 
+        // Consulta SQL CORREGIDA: ahora sí filtra por idAnimal
         val sqlQuery = """
-            SELECT a.nombre, a.raza, a.fechaNacimiento, a.pesoActual,
-                   COALESCE(al.alimento, 'Sin registro') AS alimento,
-                   COALESCE(al.observacion, '') AS observacion
-            FROM Animal a
-            LEFT JOIN Alimentacion al ON a.idAnimal = al.numeroAnimal AND al.usuario_correo = ?
-            WHERE a.idAnimal = ? AND a.usuario_correo = ?
-            ORDER BY al.idAlimentacion DESC
-            LIMIT 1
-        """.trimIndent()
+        SELECT a.nombre, a.raza, a.fechaNacimiento, a.pesoActual, 
+               COALESCE(alim.nombre, 'Sin registro') AS alimento,
+               COALESCE(al.observacion, '') AS observacion
+        FROM Animal a
+        LEFT JOIN Alimentacion al ON al.numeroAnimal = a.idAnimal
+        LEFT JOIN Alimentos alim ON al.alimento = alim.idAlimento  -- CORREGIDO: Alimentos (plural)
+        WHERE a.idAnimal = ? AND a.usuario_correo = ?
+    """.trimIndent()
+
 
         try {
-            // ✅ CORREGIDO: Pasamos el correo del usuario 3 veces a la consulta.
-            db.rawQuery(sqlQuery, arrayOf(usuarioCorreo, animalId.toString(), usuarioCorreo)).use { cursor ->
+            // Parámetros CORREGIDOS: pasamos el ID y el correo en el orden correcto
+            db.rawQuery(sqlQuery, arrayOf(animalId.toString(), usuarioCorreo)).use { cursor ->
                 if (cursor.moveToFirst()) {
                     reporte = ReporteGeneral(
                         nombreAnimal = cursor.getString(cursor.getColumnIndexOrThrow("nombre")),
@@ -146,29 +149,36 @@ class AlimentacionRepository(private val context: Context?) {
                 }
             }
         } catch (e: Exception) {
-            Log.e("AlimentacionRepo", "Error obteniendo reporte por ID", e)
+            Log.e("ReporteRepo", "Error obteniendo reporte por ID", e)
         }
+
         return reporte
     }
 
-    //  CORREGIDO: Ahora pide 'usuarioCorreo' para filtrar.
+
+
+
+
     fun obtenerReporteGeneral(usuarioCorreo: String): List<ReporteGeneral> {
         val lista = mutableListOf<ReporteGeneral>()
         val db = dbHelper?.readableDatabase ?: return lista
 
+        val sqlQuery = """
+        SELECT a.nombre, a.raza, a.fechaNacimiento, a.pesoActual, 
+               COALESCE(alim.nombre, 'Sin registro') AS alimento,
+               COALESCE(al.observacion, '') AS observacion
+        FROM Animal a
+        LEFT JOIN Alimentacion al ON al.numeroAnimal = a.idAnimal AND al.usuario_correo = ?
+        LEFT JOIN Alimentos alim ON al.alimento = alim.idAlimento AND alim.usuario_correo = ? -- CORREGIDO: Alimentos (plural)
+        WHERE a.usuario_correo = ?
+        GROUP BY a.idAnimal
+        ORDER BY a.nombre
+    """.trimIndent()
+
+
         try {
-            db.rawQuery(
-                """
-                SELECT a.nombre, a.raza, a.fechaNacimiento, a.pesoActual, 
-                       COALESCE(al.alimento, 'Sin registro') AS alimento,
-                       COALESCE(al.observacion, '') AS observacion
-                FROM Animal a
-                LEFT JOIN Alimentacion al ON al.numeroAnimal = a.idAnimal AND al.usuario_correo = ?
-                WHERE a.usuario_correo = ?
-                ORDER BY a.nombre
-                """.trimIndent(),
-                arrayOf(usuarioCorreo, usuarioCorreo)
-            ).use { cursor ->
+            db.rawQuery(sqlQuery, arrayOf(usuarioCorreo, usuarioCorreo, usuarioCorreo)).use { cursor ->
+                // El resto del código para leer el cursor se mantiene igual
                 if (cursor.moveToFirst()) {
                     do {
                         lista.add(
@@ -189,6 +199,7 @@ class AlimentacionRepository(private val context: Context?) {
         }
         return lista
     }
+
 
     fun crearYGuardarReporteCSV(context: Context, reporte: ReporteGeneral): Uri? {
         val csvHeader = "Concepto,Valor\n"

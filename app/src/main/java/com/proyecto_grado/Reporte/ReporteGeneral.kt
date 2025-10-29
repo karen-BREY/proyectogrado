@@ -15,10 +15,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
-import com.google.firebase.auth.ktx.auth // ✅ 1. IMPORTAR AUTENTICACIÓN DE FIREBASE
+import com.google.firebase.auth.ktx.auth
 import com.google.firebase.ktx.Firebase
 import com.proyecto_grado.AlimentacionRepository
 import com.proyecto_grado.ReporteGeneral
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -27,7 +31,6 @@ fun ReporteGeneralScreen(
     repo: AlimentacionRepository,
     context: Context = LocalContext.current
 ) {
-    // ✅ 2. OBTENER EL CORREO DEL USUARIO ACTUAL
     val usuarioCorreo = Firebase.auth.currentUser?.email
 
     // Estados para manejar la UI
@@ -105,8 +108,13 @@ fun ReporteGeneralScreen(
                                 onClick = {
                                     animalSeleccionadoId = id
                                     expanded = false
-                                    // ✅ 4. USAR EL CORREO REAL AL OBTENER EL REPORTE
-                                    reporteSeleccionado = repo.obtenerReportePorAnimalId(id, usuarioCorreo)
+                                    // Llamar a DB en un hilo de IO
+                                    CoroutineScope(Dispatchers.IO).launch {
+                                        val reporte = repo.obtenerReportePorAnimalId(id, usuarioCorreo)
+                                        withContext(Dispatchers.Main) {
+                                            reporteSeleccionado = reporte
+                                        }
+                                    }
                                 }
                             )
                         }
@@ -155,4 +163,6 @@ fun ReporteGeneralScreen(
         }
     }
 }
+
+
 

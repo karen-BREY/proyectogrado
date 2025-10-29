@@ -28,7 +28,6 @@ import com.proyecto_grado.ReporteGeneral
 @Composable
 fun Navegacion(modifier: Modifier = Modifier) {
     val navController = rememberNavController()
-    val listaAlimentos = remember { mutableStateListOf("Pasto kikuyo", "Melaza") }
     val context = LocalContext.current
 
     val repo = remember(context ){ AlimentacionRepository (context)}
@@ -107,17 +106,18 @@ fun Navegacion(modifier: Modifier = Modifier) {
 
 
 
+
         //  POTRERO
         composable("potrero") {
             PotreroScreen(onBack = { navController.popBackStack() })
         }
 
+
         //  REPORTES
         composable("reporteGeneral") {
-            // Ya no creas el repo aquí, lo reutilizas.
             ReporteGeneralScreen(
                 onBack = { navController.popBackStack() },
-                repo = repo // <-- Reutiliza el repo
+                repo = repo
             )
         }
 
