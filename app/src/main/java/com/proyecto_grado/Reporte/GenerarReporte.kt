@@ -123,4 +123,3 @@ fun enviarPorWhatsApp(context: Context, file: File) {
     }
 }
 
-

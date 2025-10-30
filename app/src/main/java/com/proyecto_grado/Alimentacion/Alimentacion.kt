@@ -248,7 +248,7 @@ fun AlimentacionScreen(onBack: () -> Unit) {
 
                 Spacer(Modifier.height(16.dp))
 
-                // === BOTÓN GUARDAR ===
+
                 Button(
                     onClick = {
                         val animalId = animalesMap[animalSeleccionado]
@@ -285,6 +285,7 @@ fun AlimentacionScreen(onBack: () -> Unit) {
                 ) {
                     Text("Registrar Alimentación")
                 }
+
 
                 Spacer(Modifier.height(16.dp))
 

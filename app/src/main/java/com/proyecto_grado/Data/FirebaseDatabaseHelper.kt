@@ -2,9 +2,10 @@ package com.proyecto_grado
 
 
 import android.content.Context
+import android.database.Cursor
 import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteOpenHelper
-
+import android.util.Log
 
 
 class DatabaseHelper(context: Context?) :
@@ -66,7 +67,7 @@ class DatabaseHelper(context: Context?) :
 
 // === ALIMENTOS ===
         db.execSQL("""
-    CREATE TABLE Alimento (  -- ANTES: Alimentos
+    CREATE TABLE Alimentos (  -- ANTES: Alimentos
         idAlimento INTEGER PRIMARY KEY AUTOINCREMENT,
         nombre TEXT NOT NULL,
         cantidad REAL NOT NULL,
@@ -143,7 +144,7 @@ class DatabaseHelper(context: Context?) :
     fun obtenerAnimalesConId(usuarioCorreo: String): List<Pair<Int, String>> {
         val lista = mutableListOf<Pair<Int, String>>()
         val db = readableDatabase
-        // ✅ Se añade el filtro WHERE
+
         val cursor = db.rawQuery("SELECT idAnimal, nombre FROM Animal WHERE usuario_correo = ?", arrayOf(usuarioCorreo))
         cursor.use {
             if (it.moveToFirst()) {
@@ -161,7 +162,7 @@ class DatabaseHelper(context: Context?) :
     fun obtenerLotesConId(usuarioCorreo: String): List<Pair<Int, String>> {
         val lista = mutableListOf<Pair<Int, String>>()
         val db = readableDatabase
-        // ✅ Se añade el filtro WHERE
+
         val cursor = db.rawQuery("SELECT idLote, numero FROM Lote WHERE usuario_correo = ?", arrayOf(usuarioCorreo))
         cursor.use {
             if (it.moveToFirst()) {
@@ -175,8 +176,6 @@ class DatabaseHelper(context: Context?) :
         return lista
     }
 
-    // Devuelve lista de pares (id, nombre) de alimentos
-    // Dentro de tu archivo DatabaseHelper.kt
 
     fun obtenerAlimentosConId(usuarioCorreo: String): List<Pair<Int, String>> {
         val lista = mutableListOf<Pair<Int, String>>()
@@ -184,7 +183,7 @@ class DatabaseHelper(context: Context?) :
 
         // CORRIGE ESTA LÍNEA:
         val cursor = db.rawQuery(
-            "SELECT idAlimento, nombre FROM Alimentos WHERE usuario_correo = ?", // ANTES: Alimento
+            "SELECT idAlimento, nombre FROM Alimentos WHERE usuario_correo = ?",
             arrayOf(usuarioCorreo)
         )
 
@@ -199,7 +198,7 @@ class DatabaseHelper(context: Context?) :
     }
 
 
-    // Funciones para convertir ID a nombre (para mostrar en historial)
+
     fun obtenerNombreAnimal(id: Int, usuarioCorreo: String): String {
         val db = readableDatabase
         var nombre = ""
@@ -311,7 +310,6 @@ class DatabaseHelper(context: Context?) :
         cursor.close()
         return lista
     }
-
 }
 
 

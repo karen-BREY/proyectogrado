@@ -11,6 +11,10 @@ import androidx.core.content.FileProvider
 import com.proyecto_grado.Alimentacion.Alimentacion
 import java.io.File
 import com.google.firebase.database.FirebaseDatabase
+import java.text.SimpleDateFormat
+import java.time.LocalDate
+import java.util.Date
+import java.util.Locale
 
 private val firebaseDB = FirebaseDatabase.getInstance().reference
 
@@ -46,17 +50,17 @@ class AlimentacionRepository(private val context: Context?) {
         try {
             dbHelper?.writableDatabase?.use { db ->
                 val valores = ContentValues().apply {
-                    put("numeroAnimal", alimentacion.numeroAnimal)
-                    put("lote", alimentacion.lote)
-                    put("alimento", alimentacion.alimento)
+                    put("idAnimal", alimentacion.numeroAnimal)
+                    put("idAlimento", alimentacion.alimento)
                     put("cantidad", alimentacion.cantidad)
-                    put("frecuencia", alimentacion.frecuencia)
                     put("observacion", alimentacion.observacion)
                     put("usuario_correo", usuarioCorreo)
+                    put("fecha", SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(Date()))
                 }
 
                 val resultado = db.insert("Alimentacion", null, valores)
                 if (resultado != -1L) {
+                    // Si tu tabla de Alimentos tiene stock, lo actualiza
                     val idAlimento = alimentacion.alimento
                     val cantidadUsada = alimentacion.cantidad
                     AlimentoRepository(context).descontarCantidadAlimento(idAlimento, cantidadUsada, usuarioCorreo)
@@ -72,8 +76,8 @@ class AlimentacionRepository(private val context: Context?) {
         try {
             val db = dbHelper?.readableDatabase ?: return lista
             val cursor = db.rawQuery(
-                "SELECT idAlimentacion, numeroAnimal, lote, alimento, cantidad, frecuencia, observacion FROM Alimentacion WHERE usuario_correo = ?",
-                arrayOf(usuarioCorreo)
+                "SELECT idAlimentacion, idAnimal, idAlimento, cantidad, observacion, fecha FROM Alimentacion WHERE usuario_correo = ?",
+                        arrayOf(usuarioCorreo)
             )
             cursor.use { c ->
                 if (c.moveToFirst()) {
@@ -82,11 +86,11 @@ class AlimentacionRepository(private val context: Context?) {
                             Alimentacion(
                                 idAlimentacion = c.getInt(0),
                                 numeroAnimal = c.getInt(1),
-                                lote = c.getInt(2),
-                                alimento = c.getInt(3),
-                                cantidad = c.getDouble(4),
-                                frecuencia = c.getString(5),
-                                observacion = c.getString(6)
+                                lote = 0, // ya que la tabla no tiene campo lote
+                                alimento = c.getInt(2),
+                                cantidad = c.getDouble(3),
+                                frecuencia = "", // no existe campo frecuencia
+                                observacion = c.getString(4)
                             )
                         )
                     } while (c.moveToNext())
@@ -122,22 +126,22 @@ class AlimentacionRepository(private val context: Context?) {
         val db = dbHelper?.readableDatabase ?: return null
         var reporte: ReporteGeneral? = null
 
-        // Consulta SQL CORREGIDA: ahora sí filtra por idAnimal
         val sqlQuery = """
-        SELECT a.nombre, a.raza, a.fechaNacimiento, a.pesoActual, 
-               COALESCE(alim.nombre, 'Sin registro') AS alimento,
-               COALESCE(al.observacion, '') AS observacion
-        FROM Animal a
-        LEFT JOIN Alimentacion al ON al.numeroAnimal = a.idAnimal
-        LEFT JOIN Alimentos alim ON al.alimento = alim.idAlimento  -- CORREGIDO: Alimentos (plural)
-        WHERE a.idAnimal = ? AND a.usuario_correo = ?
-    """.trimIndent()
-
+    SELECT a.nombre, a.raza, a.fechaNacimiento, a.pesoActual, 
+           COALESCE(alim.nombre, 'Sin registro') AS alimento,
+           COALESCE(al.observacion, '') AS observacion
+    FROM Animal a
+    LEFT JOIN Alimentacion al ON al.idAnimal = a.idAnimal
+    LEFT JOIN Alimentos alim ON al.idAlimento = alim.idAlimento
+    WHERE a.idAnimal = ? AND a.usuario_correo = ?
+""".trimIndent()
 
         try {
-            // Parámetros CORREGIDOS: pasamos el ID y el correo en el orden correcto
+            Log.d("SQL_DEBUG", "Consulta: $sqlQuery con valores: id=$animalId, correo=$usuarioCorreo")
+
             db.rawQuery(sqlQuery, arrayOf(animalId.toString(), usuarioCorreo)).use { cursor ->
                 if (cursor.moveToFirst()) {
+                    Log.d("SQL_DEBUG", "Reporte encontrado para ${cursor.getString(cursor.getColumnIndexOrThrow("nombre"))}")
                     reporte = ReporteGeneral(
                         nombreAnimal = cursor.getString(cursor.getColumnIndexOrThrow("nombre")),
                         raza = cursor.getString(cursor.getColumnIndexOrThrow("raza")),
@@ -146,6 +150,8 @@ class AlimentacionRepository(private val context: Context?) {
                         alimento = cursor.getString(cursor.getColumnIndexOrThrow("alimento")),
                         observacion = cursor.getString(cursor.getColumnIndexOrThrow("observacion"))
                     )
+                } else {
+                    Log.d("SQL_DEBUG", "No se encontró reporte para este animal y correo.")
                 }
             }
         } catch (e: Exception) {
@@ -154,6 +160,7 @@ class AlimentacionRepository(private val context: Context?) {
 
         return reporte
     }
+
 
 
 
@@ -168,17 +175,15 @@ class AlimentacionRepository(private val context: Context?) {
                COALESCE(alim.nombre, 'Sin registro') AS alimento,
                COALESCE(al.observacion, '') AS observacion
         FROM Animal a
-        LEFT JOIN Alimentacion al ON al.numeroAnimal = a.idAnimal AND al.usuario_correo = ?
-        LEFT JOIN Alimentos alim ON al.alimento = alim.idAlimento AND alim.usuario_correo = ? -- CORREGIDO: Alimentos (plural)
+        LEFT JOIN Alimentacion al ON al.idAnimal = a.idAnimal AND al.usuario_correo = ?
+        LEFT JOIN Alimentos alim ON al.alimento = alim.idAlimento AND alim.usuario_correo = ?
         WHERE a.usuario_correo = ?
         GROUP BY a.idAnimal
         ORDER BY a.nombre
     """.trimIndent()
 
-
         try {
             db.rawQuery(sqlQuery, arrayOf(usuarioCorreo, usuarioCorreo, usuarioCorreo)).use { cursor ->
-                // El resto del código para leer el cursor se mantiene igual
                 if (cursor.moveToFirst()) {
                     do {
                         lista.add(
@@ -199,6 +204,7 @@ class AlimentacionRepository(private val context: Context?) {
         }
         return lista
     }
+
 
 
     fun crearYGuardarReporteCSV(context: Context, reporte: ReporteGeneral): Uri? {
